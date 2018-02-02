@@ -1,0 +1,12 @@
+{
+  "presets": [
+    ["@babel/env", {
+      "targets": {
+        "node": "4"
+      },
+      "debug": true
+    }],
+    "@babel/preset-stage-0"
+  ]
+}
+
