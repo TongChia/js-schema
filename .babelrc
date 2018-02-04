@@ -2,9 +2,10 @@
   "presets": [
     ["@babel/env", {
       "targets": {
-        "node": "4"
+        "node": "current"
       },
-      "debug": true
+      "debug": true,
+      "useBuiltIns": "entry"
     }],
     "@babel/preset-stage-0"
   ]
