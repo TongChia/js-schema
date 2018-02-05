@@ -3,7 +3,7 @@ import chai from 'chai';
 import {Any} from '../src/types';
 import TypeDictionary from '../src/TypeDictionary';
 
-chai.should();
+const should = chai.should();
 
 
 describe('TYPE DIC TEST', () => {
@@ -67,13 +67,18 @@ describe('TYPE DIC TEST', () => {
   });
 
 
-  it('Update added type', () => {
-
-  });
-
-
   it('Delete added type', () => {
+    typeDic.delete('String');
+    should.not.exist(typeDic.get('String'));
+    should.not.exist(typeDic.get(Symbol.for('String')));
 
+    typeDic.delete('Boolean');
+    should.not.exist(typeDic.get('Boolean'));
+    should.not.exist(typeDic.get(Boolean));
+
+    typeDic.delete('Any');
+    should.not.exist(typeDic.get('*'));
+    should.not.exist(typeDic.get('any'));
   });
 
 });

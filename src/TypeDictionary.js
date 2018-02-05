@@ -67,13 +67,25 @@ class TypeDictionary {
     return i >= 0 ? this[$STORE][i * l + this[$PROPS].indexOf('constructor')] : undefined
   }
 
-  delete() {
-    // TODO
+  delete(type) {
+    if (!this.has(type)) return this;
+    let l = this[$PROPS].length, start = this.indexOf(type) * l, end = start + l, s = this.symbol(type);
+    this[$STORE] = this[$STORE].slice(0, start).concat(this[$STORE].slice(end));
+    for (let k in this[$ALIAS]) {
+      if (this[$ALIAS].hasOwnProperty(k) && this[$ALIAS][k] === s)
+        delete this[$ALIAS][k];
+    }
+    return this;
   }
 
   indexOf(type) {
     let l = this[$PROPS].length, s = this[$ALIAS][type], i = this[$STORE].indexOf(s || type);
     return Math.floor(i / l);
+  }
+
+  symbol(type) {
+    let i = this.indexOf(type);
+    return i >= 0 ? this[$STORE][i + this[$PROPS].indexOf('symbol')] : undefined;
   }
 
   equal(a, b) {
