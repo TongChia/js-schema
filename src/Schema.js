@@ -1,23 +1,35 @@
-import _ from './utils';
+import {isArray, isObject, assign} from './utils';
 import {simpleTypeDic} from './TypeDictionary';
 
-export default class Schema {
+export default function Schema (define) {
 
-  constructor(define) {
+  if (!new.target) return new Schema(define);
 
-    if (!new.target) return new Schema(define);
+  if (isArray(define)) return Error('not support yet');
 
-    if (_.isArray(define)) return Error('not support yet');
+  if (!isObject(define)) return new Schema({type: define});
 
-    if (!_.isObject(define)) return new Schema({type: define});
+  if (Schema.Types.has(define.type))
+    assign(this, define, {type: Schema.Types.get(define.type)});
 
-    if (Schema.Types.has(define.type))
-      _.assign(this, define, {type: Schema.Types.get(define.type)});
+  else
+    throw TypeError()
 
-    else
-      throw TypeError()
-  }
 
 }
+
+const prototypes = {
+  validates: function () {
+
+  }
+};
+
+const handler = {
+  get: function (target, prop) {
+    if (prop in target) return target[prop]
+  }
+};
+
+Schema.prototype = new Proxy(assign(Schema.prototype, prototypes), handler);
 
 Schema.Types = simpleTypeDic;

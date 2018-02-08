@@ -1,4 +1,4 @@
-const {isFunction, isString, isSymbol, isInvalidString, isUndefined, isConstructor,
+const {isFunction, isString, isSymbol, isInvalidString, isUndefined, isConstructor, isNull,
   simpleType, includes, keys, assign, has} = require('./utils');
 const {Any, Nil} = require('./types');
 
@@ -28,6 +28,7 @@ class TypeDictionary {
 
     if (isString(Type) && !Type.trim()) name = Type;
     else if (isConstructor(Type)) {constructor = Type; name = Type.name;}
+    else if (isNull(Type)) {constructor = Type; name = 'null';}
     else throw TypeError(`invalid arguments (${Type})`);
 
     if (aliases.some(alias => isInvalidString(alias)))
@@ -110,7 +111,9 @@ class TypeDictionary {
 
 }
 
-const simpleTypeDic = new TypeDictionary(Object, Array, Number, String, Boolean, Date, Function, Any, Nil);
+const simpleTypeDic = new TypeDictionary(Object, Array, Number, String, Boolean, Date, Function);
+simpleTypeDic.add(Any, '*');
+simpleTypeDic.add(null, 'nil');
 
 module.exports = TypeDictionary;
 module.exports.simpleTypeDic = simpleTypeDic;

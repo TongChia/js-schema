@@ -3,7 +3,7 @@ import chai from 'chai';
 import {Any} from '../src/types';
 import Schema from '../src/Schema';
 
-chai.should();
+const should = chai.should();
 
 
 describe('SCHEMA TEST', () => {
@@ -14,23 +14,36 @@ describe('SCHEMA TEST', () => {
 
     it('Simple types', () => {
       let str  = new Schema(String);
-      let num  = new Schema(Number);
-      let bool = new Schema(Boolean);
-      let func = new Schema(Function);
-      let date = new Schema(Date);
-      str.type.should.equal(String);
+      let num  = new Schema('number');
+      let bool = new Schema({type: Boolean});
+      let func = new Schema({type: 'function'});
+      ({type: String}).should.deep.equal(str);
       num.type.should.equal(Number);
       bool.type.should.equal(Boolean);
       func.type.should.equal(Function);
-      date.type.should.equal(Date);
     });
 
     it('`Nil` type', () => {
-      let nil = new Schema('Nil');
+      let nul = new Schema({type: null});
+      let nil = new Schema({type: 'nil'});
+      should.equal(null, nul.type);
+      should.equal(null, nil.type);
     });
 
     it('`Any` type', () => {
       let any = new Schema('*');
+      any.type.should.equal(Any);
+    });
+
+    it('Keep properties', () => {
+      let define = {
+        type: 'string',
+        enum: ['foo', 'bar'],
+        foo: true,
+        bar: false
+      };
+      let schema = new Schema(define);
+      Object.assign(define, {type: String}).should.deep.equal(schema);
     });
 
     it('Object description', () => {
@@ -42,7 +55,9 @@ describe('SCHEMA TEST', () => {
     });
 
     it('to JSON (Converted into "json-schema")', () => {
-
+      let str  = new Schema(String);
+      let json = JSON.stringify(str);
+      json.should.be.equal('{"type":"string"}')
     })
 
   });

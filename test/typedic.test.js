@@ -11,7 +11,7 @@ describe('TYPE DIC TEST', () => {
   let typeDic = new TypeDictionary;
 
 
-  it('Add type; Type should be has prototype `class`.', () => {
+  it('Add type', () => {
     let str = '', num = 0, bool = true, date = new Date(), arr = [];
 
     typeDic.add(String);
@@ -19,6 +19,7 @@ describe('TYPE DIC TEST', () => {
     typeDic.add(Boolean);
     typeDic.add(Date);
     typeDic.add(Array);
+    (() => typeDic.add(Number)).should.throw(Error);
 
     (str).class.should.equal(String);
     (num).class.should.equal(Number);
@@ -26,12 +27,26 @@ describe('TYPE DIC TEST', () => {
     (bool).class.should.equal(Boolean);
     (date).class.should.equal(Date);
 
+    String.toJSON().should.equal('string');
+    Number.toJSON().should.equal('number');
+    Boolean.toJSON().should.equal('boolean');
+    Date.toJSON().should.equal('date');
+    Array.toJSON().should.equal('array');
+
     JSON.stringify({type: String}).should.equal('{"type":"string"}');
   });
 
 
+  it('Check has', () => {
+    typeDic.has(String).should.be.true;
+    typeDic.has('number').should.be.true;
+    typeDic.has('Date').should.be.true;
+    typeDic.has(Object).should.be.false;
+  });
+
+
   it('Add error type should be throw', () => {
-    (() => typeDic.add(null)).should.throw(TypeError);
+    // (() => typeDic.add(null)).should.throw(TypeError);
     (() => typeDic.add(0)).should.throw(TypeError);
     (() => typeDic.add(() => {})).should.throw(TypeError);
     (() => typeDic.add(async function () {})).should.throw(TypeError);
