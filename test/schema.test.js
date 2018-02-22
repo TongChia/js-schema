@@ -13,22 +13,22 @@ describe('SCHEMA TEST', () => {
 
 
     it('Simple types', () => {
-      let str  = new Schema(String);
+      let str  = Schema(String);
       let num  = new Schema('number');
       let bool = new Schema({type: Boolean});
       let func = new Schema({type: 'function'});
-      ({type: String}).should.deep.equal(str);
+      str.type.should.equal(String);
       num.type.should.equal(Number);
       bool.type.should.equal(Boolean);
       func.type.should.equal(Function);
     });
 
-    it('`Nil` type', () => {
-      let nul = new Schema({type: null});
-      let nil = new Schema({type: 'nil'});
-      should.equal(null, nul.type);
-      should.equal(null, nil.type);
-    });
+    // it('`Nil` type', () => {
+    //   let nul = new Schema({type: null});
+    //   let nil = new Schema({type: 'nil'});
+    //   should.equal(null, nul.type);
+    //   should.equal(null, nil.type);
+    // });
 
     it('`Any` type', () => {
       let any = new Schema('*');
@@ -43,11 +43,17 @@ describe('SCHEMA TEST', () => {
         bar: false
       };
       let schema = new Schema(define);
-      Object.assign(define, {type: String}).should.deep.equal(schema);
+      let keys = Object.keys(schema);
+      keys.should.includes('enum');
+      keys.should.includes('foo');
+      keys.should.includes('bar');
     });
 
     it('Object description', () => {
-
+      let schema = new Schema(String);
+      let keys = Object.keys(schema);
+      schema.validates();
+      keys.should.deep.equal(schema.keys());
     });
 
     it('JSON (Compatible with "json-schema") description', () => {

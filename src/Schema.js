@@ -18,9 +18,22 @@ export default function Schema (define) {
 
 }
 
-const prototypes = {
-  validates: function () {
+// Object.defineProperty(Schema.prototype, 'keys', {
+//   enumerable: true,
+//   configurable: true,
+//   get: function () {
+//     return Object.keys(this);
+//   }
+// });
 
+const prototypes = {
+  typeValidate: function (v) {
+
+  },
+  validates: function () {
+  },
+  keys: function () {
+    return Object.keys(this);
   }
 };
 

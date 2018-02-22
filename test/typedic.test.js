@@ -15,10 +15,8 @@ describe('TYPE DIC TEST', () => {
     let str = '', num = 0, bool = true, date = new Date(), arr = [];
 
     typeDic.add(String);
-    typeDic.add(Number);
-    typeDic.add(Boolean);
-    typeDic.add(Date);
-    typeDic.add(Array);
+    typeDic.add(Number).add(Boolean);
+    typeDic.add(Date, Array);
     (() => typeDic.add(Number)).should.throw(Error);
 
     (str).class.should.equal(String);
@@ -46,15 +44,20 @@ describe('TYPE DIC TEST', () => {
 
 
   it('Add error type should be throw', () => {
-    // (() => typeDic.add(null)).should.throw(TypeError);
     (() => typeDic.add(0)).should.throw(TypeError);
     (() => typeDic.add(() => {})).should.throw(TypeError);
     (() => typeDic.add(async function () {})).should.throw(TypeError);
     (() => typeDic.add(function* () {})).should.throw(TypeError);
-    (() => typeDic.add(Any, '')).should.throw(TypeError);
-    (() => typeDic.add(Any, 1)).should.throw(TypeError);
-    (() => typeDic.add(Any, null)).should.throw(TypeError);
-    (() => typeDic.add(Any, '*')).should.not.throw();
+    (() => typeDic.add('')).should.throw(TypeError);
+    (() => typeDic.add(null)).should.throw(TypeError);
+    (() => typeDic.add(Any)).should.not.throw();
+  });
+
+
+  it('Add alias name', () => {
+    (() => typeDic.alias(Object, '*')).should.throw(Error);
+    (() => typeDic.alias(Any, '')).should.throw(TypeError);
+    (() => typeDic.alias(Any, '*')).should.not.throw();
   });
 
 
