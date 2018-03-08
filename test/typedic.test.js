@@ -12,26 +12,19 @@ describe('TYPE DIC TEST', () => {
 
 
   it('Add type', () => {
-    let str = '', num = 0, bool = true, date = new Date(), arr = [];
-
-    typeDic.add(String);
-    typeDic.add(Number).add(Boolean);
-    typeDic.add(Date, Array);
-    (() => typeDic.add(Number)).should.throw(Error);
-
-    (str).class.should.equal(String);
-    (num).class.should.equal(Number);
-    (arr).class.should.equal(Array);
-    (bool).class.should.equal(Boolean);
-    (date).class.should.equal(Date);
-
-    String.toJSON().should.equal('string');
-    Number.toJSON().should.equal('number');
-    Boolean.toJSON().should.equal('boolean');
-    Date.toJSON().should.equal('date');
-    Array.toJSON().should.equal('array');
-
-    JSON.stringify({type: String}).should.equal('{"type":"string"}');
+    (() => typeDic.add(String)).should.not.throw();
+    (() => typeDic.add(Number)).should.not.throw();
+    (() => typeDic.add(Boolean)).should.not.throw();
+    (() => typeDic.add(Date).add(Array)).should.not.throw();
+    (() => typeDic.add(Any, '*')).should.not.throw();
+    (() => typeDic.add('number')).should.throw(TypeError);
+    (() => typeDic.add(Number, Array)).should.throw(TypeError);
+    (() => typeDic.add(0)).should.throw(TypeError);
+    (() => typeDic.add(() => {})).should.throw(TypeError);
+    (() => typeDic.add(async function () {})).should.throw(TypeError);
+    (() => typeDic.add(function* () {})).should.throw(TypeError);
+    (() => typeDic.add('')).should.throw(TypeError);
+    (() => typeDic.add(null)).should.throw(TypeError);
   });
 
 
@@ -40,55 +33,37 @@ describe('TYPE DIC TEST', () => {
     typeDic.has('number').should.be.true;
     typeDic.has('Date').should.be.true;
     typeDic.has(Object).should.be.false;
+    typeDic.has(Object).should.be.false;
   });
-
-
-  it('Add error type should be throw', () => {
-    (() => typeDic.add(0)).should.throw(TypeError);
-    (() => typeDic.add(() => {})).should.throw(TypeError);
-    (() => typeDic.add(async function () {})).should.throw(TypeError);
-    (() => typeDic.add(function* () {})).should.throw(TypeError);
-    (() => typeDic.add('')).should.throw(TypeError);
-    (() => typeDic.add(null)).should.throw(TypeError);
-    (() => typeDic.add(Any)).should.not.throw();
-  });
-
-
-  it('Add alias name', () => {
-    (() => typeDic.alias(Object, '*')).should.throw(Error);
-    (() => typeDic.alias(Any, '')).should.throw(TypeError);
-    (() => typeDic.alias(Any, '*')).should.not.throw();
-  });
-
 
   it('Get added types', () => {
     typeDic.get(String).should.equal(String);
     typeDic.get('String').should.equal(String);
     typeDic.get('string').should.equal(String);
-    typeDic.get(Symbol.for('String')).should.equal(String);
+    // typeDic.get(Symbol.for('String')).should.equal(String);
 
     typeDic.get('*').should.equal(Any);
     typeDic.get('Any').should.equal(Any);
     typeDic.get('any').should.equal(Any);
-    typeDic.get(Symbol.for('Any')).should.equal(Any);
+    // typeDic.get(Symbol.for('Any')).should.equal(Any);
   });
 
 
-  it('Check type equal', () => {
-    typeDic.equal('string', String).should.be.true;
-    typeDic.equal(String, 'String').should.be.true;
-
-    typeDic.equal(Any, '*').should.be.true;
-    typeDic.equal(Any, Symbol.for('Any')).should.be.true;
-
-    typeDic.equal(String, Any).should.be.false;
-  });
+  // it('Check type equal', () => {
+  //   typeDic.equal('string', String).should.be.true;
+  //   typeDic.equal(String, 'String').should.be.true;
+  //
+  //   typeDic.equal(Any, '*').should.be.true;
+  //   typeDic.equal(Any, Symbol.for('Any')).should.be.true;
+  //
+  //   typeDic.equal(String, Any).should.be.false;
+  // });
 
 
   it('Delete added type', () => {
-    typeDic.delete('String');
+    typeDic.delete(String);
     should.not.exist(typeDic.get('String'));
-    should.not.exist(typeDic.get(Symbol.for('String')));
+    should.not.exist(typeDic.get('string'));
 
     typeDic.delete('Boolean');
     should.not.exist(typeDic.get('Boolean'));

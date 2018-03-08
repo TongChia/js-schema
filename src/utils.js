@@ -30,6 +30,8 @@ _.keys = Object.keys || ((obj) => {
   return result;
 });
 
+_.values = Object.values || ((obj) => _.keys(obj).map(k => obj[k]));
+
 _.assign = Object.assign || ((O, obj, ...others) => {
   _.keys(obj).forEach(key => {O[key] = obj[key]});
   return others.length ? _.assign(O, ...others) : O;
@@ -72,3 +74,11 @@ _.times = (n, iterate) => {
   }
   return r;
 };
+
+_.validate = (data, {type, required, properties}) =>
+  type === 'Object' ?
+    _.keys(properties).every(key => _.validate(data[key], properties[key])) :
+      _.isUndefined(data) ? required === false : _['is' + type](data)
+;
+
+_.template = (str, obj) => (new Function(..._.keys(obj), 'return `' + str + '`')(..._.values(obj)));

@@ -1,138 +1,60 @@
-const {isFunction, isString, isSymbol, isInvalidString, isUndefined, isConstructor, isNull,
-  simpleType, includes, keys, assign, has} = require('./utils');
-const {Any, Nil} = require('./types');
+import {isInvalidString, isConstructor, isArray} from './utils';
+import {Any} from './types';
 
-const $STORE = Symbol('store');
-const $PROPS = Symbol('props');
-const $ALIAS = Symbol('alias');
+export default class TypeDictionary extends Map {
 
-class TypeDictionary {
+  names = new Map;
 
-  [$STORE] = [];
-  [$PROPS] = ['symbol', 'name', 'constructor'];
-  [$ALIAS] = {};
+  constructor(...args) {
+    super();
 
-  constructor (...types) {
-    types.forEach(type => this.add(type));
+    args.forEach(arg => this.add(arg))
   }
 
-  /**
-   * Add Type
-   * @param Type {constructor}
-   * @param others {[constructor]}
-   * @return {TypeDictionary}
-   */
-  add(Type, ...others) {
-    let symbol, name, lowercase, constructor, toJSON = () => lowercase, outset = this[$STORE].length,
-      description = {enumerable: false, configurable: false, writable: false};
+  add(type, ...aliases) {
+    if (!isConstructor(type))
+      throw new TypeError('Invalid argument, TypeDictionary.add required constructor');
+    if (aliases.some(isInvalidString))
+      throw new TypeError('Invalid argument, TypeDictionary.add alias required string');
 
-    if (isString(Type) && Type.trim()) name = Type;
-    else if (isConstructor(Type)) {constructor = Type; name = Type.name;}
-    else throw TypeError(`invalid arguments (${Type})`);
+    let name = type.name, lower = name.toLowerCase();
+    this.names.set(type, aliases[0] || lower);
+    [type, name, lower].concat(aliases).forEach(alias => super.set(alias, type));
 
-    name      = name.trim();
-    symbol    = Symbol.for(name);
-    lowercase = name.toLowerCase();
-
-    if (this.has(symbol, name, lowercase, Type)) throw Error(`Already has type (${name})`);
-
-    // mark the Type;
-    if (constructor) {
-      Object.defineProperty(Type.prototype, 'class', assign(description, {value: Type}));
-      // Object.defineProperty(Type, 'sign', assign(description, {value: symbol}));
-      if (!constructor.toJSON)
-        Object.defineProperty(Type, 'toJSON', assign(description, {value: toJSON}));
-    }
-    [name, lowercase].forEach(alias => this[$ALIAS][alias] = symbol);
-    this[$STORE][outset + this[$PROPS].indexOf('symbol')]      = symbol;
-    this[$STORE][outset + this[$PROPS].indexOf('name')]        = name;
-    this[$STORE][outset + this[$PROPS].indexOf('constructor')] = constructor;
-
-    if (others.length) return this.add(...others);
-    return this;
-  }
-
-  /**
-   * add alias name
-   * @param type
-   * @param alias {string}
-   * @return {TypeDictionary}
-   */
-  alias(type, alias) {
-    if (!this.has(type))
-      throw Error(`not exists (${type})`);
-    if (isInvalidString(alias))
-      throw TypeError(`invalid arguments (${alias})`);
-    this[$ALIAS][alias] = this.symbol(type);
     return this
   }
 
-  /**
-   * get type
-   * @param type
-   * @return {object}
-   */
-  get(type) {
-    let i = this.indexOf(type), l = this[$PROPS].length;
-    return i >= 0 ? this[$STORE][i * l + this[$PROPS].indexOf('constructor')] : undefined
+  has(type) {
+    return [].concat(type).every(t => super.has(t))
   }
 
-  /**
-   * delete the type
-   * @param type
-   * @return {TypeDictionary}
-   */
   delete(type) {
-    if (!this.has(type)) return this;
-    let l = this[$PROPS].length, start = this.indexOf(type) * l, end = start + l, s = this.symbol(type);
-    this[$STORE] = this[$STORE].slice(0, start).concat(this[$STORE].slice(end));
-    for (let k in this[$ALIAS]) {
-      if (this[$ALIAS].hasOwnProperty(k) && this[$ALIAS][k] === s)
-        delete this[$ALIAS][k];
-    }
-    return this;
+    type = super.get(type);
+    if (type)
+      for (let [key, value] of this)
+        if (value === type)
+          super.delete(key);
+    return this
   }
 
-  /**
-   * get index of type
-   * @param type
-   * @return {number}
-   */
-  indexOf(type) {
-    let l = this[$PROPS].length, s = this[$ALIAS][type], i = this[$STORE].indexOf(s || type);
-    return Math.floor(i / l);
+  get(type) {
+    return isArray(type) ? type.map(super.get) : super.get(type);
   }
 
-  symbol(type) {
-    let i = this.indexOf(type), l = this[$PROPS].length;
-    return i >= 0 ? this[$STORE][i * l + this[$PROPS].indexOf('symbol')] : undefined;
+  equal($type, type) {
+    return super.get($type) === type;
   }
 
-  equal(a, b) {
-    let i = this.indexOf(a);
-    return (i >= 0) && (i === this.indexOf(b));
+  name(type) {
+    return isArray(type) ?
+      this.get(type).map(this.names.get) :
+      this.names.get(this.get(type));
   }
-
-  /**
-   * check type
-   * @param type
-   * @param others
-   * @return {boolean}
-   */
-  has(type, ...others) {
-    if (others.length) return this.has(...others);
-    return includes(this[$STORE], type) || has(this[$ALIAS], type);
-  }
-
-  get length () {
-    return Math.ceil(this[$STORE].length / this[$PROPS].length);
-  }
-
 }
 
-const simpleTypeDic = new TypeDictionary(Object, Array, Number, String, Boolean, Date, Function);
-simpleTypeDic.add(Any);
-simpleTypeDic.alias(Any, '*');
+export const simpleTypeDic = new TypeDictionary(
+  Object, Array, Number, String, Boolean, Date, Function
+).add(Any, '*');
 
-module.exports = TypeDictionary;
-module.exports.simpleTypeDic = simpleTypeDic;
+if ('undefined' !== typeof Buffer)
+  simpleTypeDic.add(Buffer);
