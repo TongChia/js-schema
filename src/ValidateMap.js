@@ -1,6 +1,6 @@
 import {
-  isObject, isArray, isBoolean, isDate, isNumber, isString, isFunction,
-  isUndefined, isInteger, isConstructor, isInvalidString, assign, keys, different
+  isObject, isArray, isBoolean, isDate, isNumber, isString, isFunction, isUndefined,
+  isAsyncFunction, isInteger, isConstructor, isInvalidString, assign, keys, contains
 } from "./utils";
 import {Any} from './types';
 
@@ -15,6 +15,7 @@ export default class ValidateMap extends Map {
       conf.specified = true;
     else if (isInvalidString(prop))
       throw new TypeError();
+
     if (isFunction(validate))
       validate = {validator: validate};
     else if (!isObject(validate))
@@ -39,12 +40,6 @@ export default class ValidateMap extends Map {
           super.delete(key);
     return this
   }
-
-  get(prop) {
-    if (isArray(prop))
-      return prop.map(p => assign({prop: p}, super.get(p)));
-    return super.get(prop)
-  }
 }
 
 export const validates = new ValidateMap()
@@ -54,7 +49,7 @@ export const validates = new ValidateMap()
   .set(Date, isDate)
   .set(Object, isObject)
   .set(Array, isArray)
-  .set(Any, (data) => !!data)
+  .set(Any, (data) => !isUndefined(data))
   .set('enum', (data, _enum) => _enum.includes(data))
   .set('required', (data, required) => (!required && isUndefined(data)))
   .set('min', (data, min) => (data > min))
@@ -70,8 +65,13 @@ export const validates = new ValidateMap()
       (data instanceof type))
   )
   .set('properties', (data, properties) =>
-    !different(keys(data), keys(properties)).length &&
-    keys(properties).every(prop => properties[prop].validate(data[prop]))
+    // TODO: check field required.
+    // TODO: sub validate callback.
+    contains(keys(properties), keys(data)) &&
+    keys(properties).every(prop => {
+      let sub = properties[prop];
+      return properties[prop].validate(data[prop])
+    })
   )
   .set('items', (data, items) =>
     isArray(items) ?
