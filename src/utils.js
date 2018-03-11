@@ -51,6 +51,14 @@ _.includes = Array.prototype.includes ?
     return false;
   };
 
+_.set = (obj, key, value) => {
+  if (value !== undefined)
+    obj[key] = value;
+  return obj
+};
+
+_.mapValues = (obj, fn) => _.keys(obj).reduce((O, key) => _.set(O, key, fn(obj[key], key, obj)), Object.create(null));
+
 _.different = (arr1, arr2) => arr1.filter(i => arr2.indexOf(i) < 0);
 
 _.differences = (arr1, arr2) => arr1.filter(item => !_.includes(arr2, item));
@@ -59,7 +67,7 @@ _.intersection = (arr1, arr2) => arr1.filter(item => _.includes(arr2, item));
 
 _.contains = (arr1, arr2) => _.differences(arr2, arr1).length === 0;
 
-_.zip = (arr1, arr2) => arr1.map((item, index) => [item, arr2[index]]);
+// _.zip = (arr1, arr2) => arr1.map((item, index) => [item, arr2[index]]);
 
 _.uniq = (arr) => arr.filter((item, index, self) => self.indexOf(item) === index);
 
@@ -67,18 +75,22 @@ _.has = (obj, prop) => _.includes(_.keys(obj), prop);
 
 _.capitalize = (str) => str.split('-').map(s => (s.charAt(0).toUpperCase() + s.slice(1))).join('');
 
-_.times = (n, iterate) => {
-  let i = 0, r = [];
-  while (++i <= n) {
-    r.push(iterate(i, n));
-  }
-  return r;
-};
+// _.times = (n, iterate) => {
+//   let i = 0, r = [];
+//   while (++i <= n) {
+//     r.push(iterate(i, n));
+//   }
+//   return r;
+// };
 
-_.validate = (data, {type, required, properties}) =>
-  type === 'Object' ?
-    _.keys(properties).every(key => _.validate(data[key], properties[key])) :
-      _.isUndefined(data) ? required === false : _['is' + type](data)
-;
+// _.validate = (data, {type, required, properties}) =>
+//   type === 'Object' ?
+//     _.keys(properties).every(key => _.validate(data[key], properties[key])) :
+//       _.isUndefined(data) ? required === false : _['is' + type](data);
 
-_.template = (str, obj) => (new Function(..._.keys(obj), 'return `' + str + '`')(..._.values(obj)));
+_.template = (str, obj) => (new Function(...(_.keys(obj)), 'return `' + str + '`')(...(_.values(obj))));
+
+_.toPromise = (fn) => (...args) =>
+  new Promise((resolve, reject) =>
+    fn(...args, (result, error) => error ? reject(error) : resolve(result))
+  );
