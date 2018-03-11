@@ -46,8 +46,9 @@ export default class TypeDictionary extends Map {
   }
 
   name(type) {
+    // TODO: optimize ↓
     return isArray(type) ?
-      this.get(type).map(this.names.get) :
+      this.get(type).map(t => this.names.get(t)) :
       this.names.get(this.get(type));
   }
 }

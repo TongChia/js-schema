@@ -4,7 +4,9 @@ import {Any} from '../src/types';
 import Schema from '../src/Schema';
 
 const should = chai.should();
-const types = [String, Number, Boolean, Date, Object, Array, Function];
+const types = [String, Number, Boolean, Date, Object, Array, Function, Any];
+if ('undefined' !== typeof Buffer)
+  types.push(Buffer);
 
 describe('SCHEMA TEST', () => {
 
@@ -13,17 +15,15 @@ describe('SCHEMA TEST', () => {
 
 
     it('Simple types', () => {
-      let str  = Schema(String);
-      let num  = new Schema('number');
-      let bool = new Schema({type: Boolean});
-      let func = new Schema({type: 'function'});
-      str.type.should.equal(String);
-      num.type.should.equal(Number);
-      bool.type.should.equal(Boolean);
-      func.type.should.equal(Function);
+      for (let Type of types) {
+        for (let _Type of [Type, Type.name, Type.name.toLowerCase()]) {
+          Schema(_Type).type.should.equal(Type);
+          Schema({type: _Type}).type.should.equal(Type);
+          (new Schema(_Type)).type.should.equal(Type);
+        }
+      }
 
-      let any = new Schema('*');
-      any.type.should.equal(Any);
+      Schema('*').type.should.equal(Any);
     });
 
     it('Keep properties', () => {
@@ -34,10 +34,9 @@ describe('SCHEMA TEST', () => {
         bar: false
       };
       let schema = new Schema(define);
-      let keys = Object.keys(schema);
-      keys.should.includes('enum');
-      keys.should.includes('foo');
-      keys.should.includes('bar');
+      schema.should.hasOwnProperty('enum');
+      schema.should.hasOwnProperty('foo');
+      schema.should.hasOwnProperty('bar');
     });
 
     it('Object description', () => {
@@ -64,37 +63,38 @@ describe('SCHEMA TEST', () => {
   });
 
 
-  it.skip('Create schema', () => {
+  it('Create schema', () => {
 
     const schema = new Schema({
       name:    String,
       binary:  Buffer,
       living:  Boolean,
       updated: { type: Date, default: Date.now },
-      age:     { type: Number, min: 18, max: 65 },
-      // mixed:   Schema.Types.Mixed,
-      // _someId: Schema.Types.ObjectId,
-      array:      [],
-      ofString:   [String],
-      ofNumber:   [Number],
-      ofDates:    [Date],
-      ofBuffer:   [Buffer],
-      ofBoolean:  [Boolean],
-      ofMixed:    [Schema.Types.Mixed],
-      ofObjectId: [Schema.Types.ObjectId],
-      ofArrays:   [[]],
-      ofArrayOfNumbbers: [[Number]],
-      nested: {
-        stuff: { type: String, lowercase: true, trim: true }
-      }
+      // age:     { type: Number, min: 18, max: 65 },
+      // // mixed:   Schema.Types.Mixed,
+      // // _someId: Schema.Types.ObjectId,
+      // array:      [],
+      // ofString:   [String],
+      // ofNumber:   [Number],
+      // ofDates:    [Date],
+      // ofBuffer:   [Buffer],
+      // ofBoolean:  [Boolean],
+      // // ofMixed:    [Schema.Types.Mixed],
+      // // ofObjectId: [Schema.Types.ObjectId],
+      // ofArrays:   [[]],
+      // ofArrayOfNumbbers: [[Number]],
+      // nested: {
+      //   stuff: { type: String, lowercase: true, trim: true }
+      // }
     });
 
     const result = schema.validateSync({
       name: 'TongChia',
-      binary: new Buffer([0xff, 0x01, 0xf1])
+      binary: new Buffer([0xff, 0x01, 0xf1]),
+      living: true,
     });
 
-    result.should.be.TRUE;
+    result.should.be.true;
 
   });
 
