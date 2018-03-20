@@ -70,28 +70,37 @@ describe('SCHEMA TEST', () => {
       binary:  Buffer,
       living:  Boolean,
       updated: { type: Date, default: Date.now },
-      // age:     { type: Number, min: 18, max: 65 },
+      age:     { type: Number, min: 18, max: 65 },
       // // mixed:   Schema.Types.Mixed,
       // // _someId: Schema.Types.ObjectId,
       // array:      [],
-      // ofString:   [String],
-      // ofNumber:   [Number],
+      ofString:   [String],
+      ofNumber:   [Number],
       // ofDates:    [Date],
       // ofBuffer:   [Buffer],
       // ofBoolean:  [Boolean],
       // // ofMixed:    [Schema.Types.Mixed],
       // // ofObjectId: [Schema.Types.ObjectId],
-      // ofArrays:   [[]],
-      // ofArrayOfNumbbers: [[Number]],
-      // nested: {
-      //   stuff: { type: String, lowercase: true, trim: true }
-      // }
+      ofArrays:   [[]],
+      ofArrayOfNumbers: [[Number]],
+      nested: {
+        stuff: { type: String, lowercase: true, trim: true }
+      }
     });
 
     const result = schema.validateSync({
       name: 'TongChia',
       binary: new Buffer([0xff, 0x01, 0xf1]),
       living: true,
+      updated: new Date(),
+      age: 65,
+      ofString: ['foo', 'bar'],
+      ofNumber: [1, 2, 0],
+      ofArrays: [[1, 'foo', false]],
+      ofArrayOfNumbers: [[123]],
+      nested: {
+        stuff: 'foobar'
+      }
     });
 
     result.should.be.true;
