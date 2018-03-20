@@ -1,4 +1,4 @@
-import {assign, keys, simpleType, mapValues, includes, toSync,
+import {assign, keys, mapValues, includes, toSync,
   isObject, isArray, isUndefined, isFunction} from './utils';
 import {simpleTypeDic as types} from './TypeDictionary';
 import {validates} from "./ValidateMap";
@@ -34,39 +34,30 @@ function Schema (define, options) {
   // recursive
   if (!new.target) return new Schema(define, options);
 
-  let formatted = normalize(define);
+  let formatted =
+    (isObject(define)) ?
+      (isArray(define.type) ? (define.type.length > 0 && define.type.every(types.has)) : types.has(define.type)) ?
+        {...define} :
+        {type: Object, properties: mapValues(define, Schema)} :
+    (isArray(define)) ?
+      (define.length === 0) ?
+        {type: Array, items: Schema(Any)} :
+      (define.length === 1) ?
+        {type: Array, items: Schema(define[0])} :
+      (define.every(t => types.has(t))) ?
+        {type: [...define]} :
+        {type: Array, items: define.map(Schema)} :
+    (types.has(define)) ?
+      {type: define} : undefined;
+
   if (!formatted) throw new TypeError('Invalid argument');
 
-  this.assign(formatted);
+  assign(this, formatted);
 
   if (options && options.freeze) Object.freeze(this);
 }
 
 const proto = Schema.prototype;
-
-proto.set_type = function (type) {
-  this.type = types.get(type);
-};
-
-proto.set_items = function (items) {
-  this.items = isArray(items) ? items.map(Schema) : Schema(items);
-};
-
-proto.set_properties = function (props) {
-  this.properties = mapValues(props, Schema);
-};
-
-proto.set = function (attribute, value) {
-  if (includes(['type', 'items', 'properties'], attribute))
-    this['set_' + attribute](value);
-  else
-    this[attribute] = value;
-};
-
-proto.assign = function merge (define) {
-  //TODO: Schema.schema, check define. (like json-schema)
-  keys(define).forEach((prop) => {this.set(prop, define[prop])})
-};
 
 proto.validateSync = function validateSync (value, force) {
   if (force) return toSync(this.validate)(value);
