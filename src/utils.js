@@ -1,36 +1,41 @@
 const _ = module.exports = {};
 
-const hasReflect = typeof Reflect !== 'undefined';
+_.hasReflect = typeof Reflect !== 'undefined';
+_.hasBuffer = typeof Buffer !== 'undefined';
 
 _.simpleType = (v) => Object.prototype.toString.call(v).match(/^\[object (\w+)]$/)[1];
 
-(['Object', 'Array', 'Number', 'String', 'Boolean', 'Date', 'Symbol', 'Buffer', 'RegExp',
+(['Object', 'Array', 'String', 'Boolean', 'Symbol', 'RegExp', 'Error',
   'Null', 'Undefined', 'Promise', 'Map', 'Set', 'AsyncFunction', 'GeneratorFunction'
 ]).forEach(type => {
   _['is' + type] = (v) => Object.prototype.toString.call(v) === `[object ${type}]`;
 });
 
-_['isPlainFunction'] = (fn) => Object.prototype.toString.call(fn) === '[object Function]';
-_['isFunction'] = (fn) => (typeof fn === 'function');
-_['isConstructor'] = (fn) => (_.isPlainFunction(fn) && fn.prototype && fn.name);
-_['isArray'] = Array.isArray;
-_['isNaN'] = Number.isNaN;
-_['isInteger'] = Number.isInteger;
-_['isNil'] = (v) => (((t) => (t && (t === 'Null' || t === 'Undefined')))(_.simpleType(v)));
-_['isInvalidString'] = (str) => !(_.isString(str) && str.trim());
+_.isPlainFunction = (fn) => Object.prototype.toString.call(fn) === '[object Function]';
+_.isFunction = (fn) => (typeof fn === 'function');
+_.isConstructor = (fn) => (_.isPlainFunction(fn) && fn.prototype && fn.name);
+_.isArray = Array.isArray;
+_.isNaN = Number.isNaN;
+_.isInteger = Number.isInteger;
+_.isNil = (v) => (((t) => (t && (t === 'Null' || t === 'Undefined')))(_.simpleType(v)));
+_.isDate = (date) => Object.prototype.toString.call(date) === '[object Date]' && !_.isNaN(date.getTime());
+_.isNumber = (num) => Object.prototype.toString.call(num) === '[object Number]' && !_.isNaN(num);
+_.isInvalidString = (str) => !(_.isString(str) && str.trim());
 
-_.ownKeys = hasReflect ? Reflect.ownKeys :
+_.ownKeys = _.hasReflect ? Reflect.ownKeys :
   (target) => Object.getOwnPropertyNames(target).concat(Object.getOwnPropertySymbols(target));
 
 _.keys = Object.keys || ((obj) => {
   let result = [];
   for (let prop in obj)
-    if (Object.hasOwnProperty.call(obj, prop))
+    if (Object.prototype.hasOwnProperty.call(obj, prop))
       result.push(prop);
   return result;
 });
 
 _.values = Object.values || ((obj) => _.keys(obj).map(k => obj[k]));
+
+_.entries = Object.entries || ((obj) => _.keys(obj).map(k => [k, obj[k]]));
 
 _.assign = Object.assign || ((O, obj, ...others) => {
   _.keys(obj).forEach(key => {O[key] = obj[key]});
@@ -75,22 +80,14 @@ _.has = (obj, prop) => _.includes(_.keys(obj), prop);
 
 _.capitalize = (str) => str.split('-').map(s => (s.charAt(0).toUpperCase() + s.slice(1))).join('');
 
-// _.times = (n, iterate) => {
-//   let i = 0, r = [];
-//   while (++i <= n) {
-//     r.push(iterate(i, n));
-//   }
-//   return r;
-// };
-
-// _.validate = (data, {type, required, properties}) =>
-//   type === 'Object' ?
-//     _.keys(properties).every(key => _.validate(data[key], properties[key])) :
-//       _.isUndefined(data) ? required === false : _['is' + type](data);
-
 _.template = (str, obj) => (new Function(...(_.keys(obj)), 'return `' + str + '`')(...(_.values(obj))));
+// _.templateFn = (str, ...argNames) => new Function(...argNames, 'return `' + str + '`');
+
+_.toArray = (value) => [].concat(value || []);
 
 _.toPromise = (fn) => (...args) =>
   new Promise((resolve, reject) =>
     fn(...args, (result, error) => error ? reject(error) : resolve(result))
   );
+
+_.toSync = () => {};

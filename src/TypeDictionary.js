@@ -1,4 +1,4 @@
-import {isInvalidString, isConstructor, isArray} from './utils';
+import {isInvalidString, isConstructor, isArray, hasBuffer} from './utils';
 import {Any} from './types';
 
 export default class TypeDictionary extends Map {
@@ -38,7 +38,7 @@ export default class TypeDictionary extends Map {
   }
 
   get(type) {
-    return isArray(type) ? type.map(super.get) : super.get(type);
+    return isArray(type) ? type.map(t => super.get(t)) : super.get(type);
   }
 
   equal($type, type) {
@@ -57,5 +57,4 @@ export const simpleTypeDic = new TypeDictionary(
   Object, Array, Number, String, Boolean, Date, Function
 ).add(Any, '*');
 
-if ('undefined' !== typeof Buffer)
-  simpleTypeDic.add(Buffer);
+if (hasBuffer) simpleTypeDic.add(Buffer);
