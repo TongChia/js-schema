@@ -6,29 +6,6 @@ import {Any, ValidationError} from "./types";
 
 const schemas = new Map();
 
-const normalize = (define) => {
-
-  if (isObject(define))
-    return (isArray(define.type) ?
-      (define.type.length > 0 && define.type.every(types.has)) :
-      (types.has(define.type))) ?
-        {...define} :
-        {type: Object, properties: {...define}};
-
-  if (isArray(define))
-    return (define.length === 0) ?
-      {type: Array, items: {type: Any}} :
-      (define.length === 1) ?
-        {type: Array, items: normalize(define[0])} :
-        (define.every(t => types.has(t))) ?
-          {type: [...define]} :
-          {type: Array, items: [...define]};
-
-  if (types.has(define))
-    return {type: define};
-
-};
-
 //TODO: Add $title;
 function Schema (define, options) {
   // recursive
@@ -80,6 +57,7 @@ proto.validate = function validate (value, callback) {
 };
 
 proto.toJSON = function toJSON (version) {
+  //TODO: to json-schema format;
   let type = this.type;
   return assign({}, this, {type: types.name(type)})
 };
