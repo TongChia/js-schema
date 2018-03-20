@@ -1,44 +1,50 @@
 import {
-  isObject, isArray, isBoolean, isDate, isNumber, isString, isFunction, isUndefined,
-  isAsyncFunction, isInteger, isConstructor, isInvalidString, assign, keys, contains
+  isUndefined, isBoolean, isDate, isString, isSymbol, isRegExp, isObject,
+  isArray, isFunction, isInteger, isNumber, isAsyncFunction, isConstructor,
+  isInvalidString, assign, keys, contains, toArray
 } from "./utils";
-import {Any} from './types';
+import {Any, ValidationError} from './types';
 
 export default class ValidateMap extends Map {
 
-  set(prop, validate) {
-    let conf = {
-      async: false,
-      message: '${value} is not validated'
-    };
+  scopes = new Map;
+
+  /**
+   * Set `validate`.
+   * @param {(String|*)} prop
+   * @param {(Object|Function)} validate
+   * @param {(Array|*)} [scopes]
+   * @param {Boolean} [isAsync]
+   * @return {ValidateMap}
+   */
+  set(prop, validate, scopes, isAsync) {
+    let conf = {async: false, message: '${value} is not validated'};
+
+    if (isConstructor(scopes)) scopes = [scopes];
+    if (isArray(scopes) && scopes.every(isConstructor)) this.scopes.set(prop, scopes);
+
     if (isConstructor(prop))
-      conf.specified = true;
+      conf.specified = prop;
     else if (isInvalidString(prop))
-      throw new TypeError();
+      throw new TypeError(`Invalid argument (${prop})`);
 
     if (isFunction(validate))
       validate = {validator: validate};
     else if (!isObject(validate))
-      throw new TypeError();
+      throw new TypeError(`Invalid argument (${validate})`);
     else if (!isFunction(validate.validator))
-      throw new TypeError();
+      throw new TypeError(`Invalid argument (${validate.validator})`);
+
+    if (isAsyncFunction(validate.validator)) conf.await = true;
 
     super.set(prop, assign(conf, validate));
 
     return this;
   }
 
-  has(prop) {
-    return [].concat(prop).every(p => super.has(p))
-  }
-
-  delete(type) {
-    type = super.get(type);
-    if (type)
-      for (let [key, value] of this)
-        if (value === type)
-          super.delete(key);
-    return this
+  get(attribute, type) {
+    if (!this.scopes.has(attribute) || this.scopes.get(attribute).includes(type))
+      return super.get(attribute);
   }
 }
 
@@ -49,33 +55,47 @@ export const validates = new ValidateMap()
   .set(Date, isDate)
   .set(Object, isObject)
   .set(Array, isArray)
+  .set(Symbol, isSymbol)
+  .set(RegExp, isRegExp)
   .set(Any, (data) => !isUndefined(data))
-  .set('enum', (data, _enum) => _enum.includes(data))
-  .set('required', (data, required) => (!required && isUndefined(data)))
-  .set('min', (data, min) => (data > min))
-  .set('max', (data, max) => (data < max))
-  .set('match', (data, match) => match.test(data))
-  .set('minLength', (data, min) => (data.length > min))
-  .set('minLength', (data, max) => (data.length < max))
-  .set('integer', (data, integer) => (!integer || isInteger(data)))
-  .set('uniq', (data, uniq) => (!uniq || data.every((v, i, d) => d.indexOf(v) === i)))
-  .set('type', (data, type) =>
-    (validates.has(type) ?
-      [].concat(validates.get(type)).some(({validator}) => validator(data)) :
-      (data instanceof type))
+  .set('enum', (data, schema) => schema.enum.includes(data))
+  .set('min', (data, {min}) => (data >= min), Number)
+  .set('max', (data, {max}) => (data <= max), Number)
+  .set('match', (data, {match}) => match.test(data), String)
+  .set('minLength', (data, {min}) => (data.length > min), String)
+  .set('maxLength', (data, {max}) => (data.length < max), String)
+  .set('minItems', (data, {min}) => (data.length > min), Array)
+  .set('maxItems', (data, {max}) => (data.length < max), Array)
+  .set('integer', (data, {integer}) => (!integer || isInteger(data)), Number)
+  .set('uniq', (data, {uniq}) => (!uniq || data.every((v, i, d) => d.indexOf(v) === i)), Array)
+  .set('before', (data, {before}) => (new Date(data) < new Date(before)), Date)
+  .set('after', (data, {after}) => (new Date(data) > new Date(after)), Date)
+
+  // check type first.
+  .set('__type', (data, {type}) =>
+    toArray(type).find(t =>
+      validates.has(t) ? validates.get(t).validator(data) : (data instanceof t)
+    )
   )
-  .set('properties', (data, properties) =>
-    // TODO: check field required.
-    // TODO: sub validate callback.
-    contains(keys(properties), keys(data)) &&
-    keys(properties).every(prop => {
-      let sub = properties[prop];
-      return properties[prop].validate(data[prop])
-    })
-  )
-  .set('items', (data, items) =>
-    isArray(items) ?
-      items.every((schema, i) => schema.validate(data[i])) :
-      data.every(v => items.validate(v))
+  // .set('required', (data, {required}) => (!required && isUndefined(data)))
+  .set('$properties', () => {
+    // TODO: check properties with callback
+  })
+  .set('properties', (data, {properties}) => {
+    let _props = keys(properties);
+    let _keys = keys(data);
+
+    return contains(_props, _keys) && _props.every(prop => {
+      let _schema = properties[prop];
+      let _data = data[prop];
+      if (isUndefined(_data) && !_schema.required)
+        return true;
+      return _schema.validate(_data);
+    });
+  }, Object)
+  .set('items', (data, {items}) => isArray(items) ?
+    items.every((schema, i) => schema.validate(data[i])) :
+    data.every(v => items.validate(v)),
+    Array
   )
 ;
