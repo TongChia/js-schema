@@ -1,31 +1,26 @@
-import {isInvalidString, isConstructor, isArray, hasBuffer} from './utils';
+import {isUndefined, isObject, isArray, isNumber, isString, isBoolean, isDate,
+  isFunction, isSymbol, isRegExp, isInteger, isInvalidString, isConstructor,
+  hasBuffer, isPlainFunction} from './utils';
 import {Any} from './types';
 
 export default class TypeDictionary extends Map {
 
   names = new Map;
+  validators = new Map;
 
-  constructor(...args) {
-    super();
-
-    args.forEach(arg => this.add(arg))
-  }
-
-  add(type, ...aliases) {
-    if (!isConstructor(type))
-      throw new TypeError('Invalid argument, TypeDictionary.add required constructor');
+  set(type, ...aliases) {
+    if (!isConstructor(type) && isInvalidString(type))
+      throw new TypeError('Invalid argument, TypeDictionary.set required constructor');
+    if (isPlainFunction(aliases[aliases.length - 1]))
+      this.validators.set(type, aliases.pop());
     if (aliases.some(isInvalidString))
-      throw new TypeError('Invalid argument, TypeDictionary.add alias required string');
+      throw new TypeError('Invalid argument, TypeDictionary.set alias required string');
 
     let name = type.name, lower = name.toLowerCase();
-    this.names.set(type, aliases[0] || lower);
+    this.names.set(type, lower);
     [type, name, lower].concat(aliases).forEach(alias => super.set(alias, type));
 
     return this
-  }
-
-  has(type) {
-    return [].concat(type).every(t => super.has(t))
   }
 
   delete(type) {
@@ -37,12 +32,20 @@ export default class TypeDictionary extends Map {
     return this
   }
 
-  get(type) {
-    return isArray(type) ? type.map(t => super.get(t)) : super.get(type);
-  }
-
-  equal($type, type) {
-    return super.get($type) === type;
+  /**
+   * Compare whether `type`s equality.
+   * @param {string|constructor} _type
+   * @param {constructor} type
+   * @example <caption>ok</caption>
+   * // -> true
+   * types.equal('string', String) && types.equal('str', String) && types.equal(String, String)
+   * @example <caption>not ok</caption>
+   * // -> false
+   * types.equal('number', String) || types.equal(Number, String) || types.equal('str', 'str')
+   * @return {boolean}
+   */
+  equal(_type, type) {
+    return super.get(_type) === type;
   }
 
   name(type) {
@@ -51,10 +54,25 @@ export default class TypeDictionary extends Map {
       this.get(type).map(t => this.names.get(t)) :
       this.names.get(this.get(type));
   }
+
+  // check(type, data) {
+  //   if (this.validators.has(type))
+  //     return this.validators.get(type)(data);
+  //   return (data instanceof type);
+  // }
 }
 
-export const simpleTypeDic = new TypeDictionary(
-  Object, Array, Number, String, Boolean, Date, Function
-).add(Any, '*');
+export const simpleTypeDic = new TypeDictionary()
+  .set(Any, '*', (data) => !isUndefined(data))
+  .set(Object, 'obj', isObject)
+  .set(Array, 'arr', isArray)
+  .set(String, 'str', isString)
+  .set(Number, 'num', 'float', isNumber)
+  // .set('Integer', 'integer', 'int', isInteger)
+  .set(Boolean, 'bool', isBoolean)
+  .set(Date, 'datetime', isDate)
+  .set(Function, 'fun', isFunction)
+  .set(Symbol, 'fun', isSymbol)
+  .set(RegExp, 'fun', isRegExp);
 
-if (hasBuffer) simpleTypeDic.add(Buffer);
+if (hasBuffer) simpleTypeDic.set(Buffer, 'buff');
