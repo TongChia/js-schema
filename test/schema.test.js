@@ -107,6 +107,19 @@ describe('SCHEMA TEST', () => {
 
   });
 
+  it('Async validate', (done) => {
+    let schema = new Schema({
+      name: String,
+      age: Number
+    });
+
+    schema.validate({name: 1, age: 2}, (err, value) => {
+      console.log(err);
+      console.log(value);
+      done();
+    });
+  });
+
   it.skip('Create schema with a constructor(or class)', (done) => {
     const stringSchema = new Schema(String);
     const numberSchema = new Schema(Number);

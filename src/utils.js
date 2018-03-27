@@ -85,9 +85,21 @@ _.template = (str, obj) => (new Function(...(_.keys(obj)), 'return `' + str + '`
 
 _.toArray = (value) => [].concat(value || []);
 
-_.toPromise = (fn) => (...args) =>
-  new Promise((resolve, reject) =>
-    fn(...args, (result, error) => error ? reject(error) : resolve(result))
-  );
+_.toAwait = (fn) => (...args) =>
+  new Promise((resolve, reject) => {
+    let cb = (result, err) => err ? reject(err) : resolve(result);
+    try {
+      fn(...args, cb);
+    } catch (err) {
+      if (err) reject(err)
+    }
+  });
 
-_.toSync = () => {};
+_.toAsync = (fn) => {
+  return (...args) => {
+    let cb = args.pop();
+    fn(...args).then(result => cb(null, result)).catch(err => cb(err))
+  };
+};
+
+_.asyncValidate = () => {};
