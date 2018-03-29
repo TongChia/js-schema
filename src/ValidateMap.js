@@ -61,29 +61,26 @@ export const validates = new ValidateMap()
   .set('properties', async (data, {properties}) => {
     let props = keys(properties);
     let _keys = keys(data);
-    let errors = {};
-    let warnings = [];
 
     let extra = different(props, _keys);
 
     if (extra.length) return new ValidationError('extra' + extra);
 
     for (let prop of props) {
-      let _schema = properties[prop];
-      let _data = data[prop];
-      if (isUndefined(_data) && !_schema.required) return true;
-      let result = await _schema.validateWait(_data);
-      if (!result) throw new ValidationError(template('123', {prop}));
+      let _schema = properties[prop], _data = data[prop], result;
+      if (isUndefined(_data) && _schema.required) throw new ValidationError('Undefined');
+      result = await _schema.validateWait(_data);
       if (isError(result)) throw result;
+      data[prop] = result;
     }
 
-    return true;
+    return data;
   }, Object)
   .set('properties', (data, {properties}) => {
-    let _props = keys(properties);
+    let props = keys(properties);
     let _keys = keys(data);
 
-    return contains(_props, _keys) && _props.every(prop => {
+    return contains(props, _keys) && props.every(prop => {
       let _schema = properties[prop];
       let _data = data[prop];
       if (isUndefined(_data) && !_schema.required)

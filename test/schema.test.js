@@ -16,10 +16,10 @@ describe('SCHEMA TEST', () => {
 
     it('Simple types', () => {
       for (let Type of types) {
-        for (let _Type of [Type, Type.name, Type.name.toLowerCase()]) {
-          Schema(_Type).type.should.equal(Type);
-          Schema({type: _Type}).type.should.equal(Type);
-          (new Schema(_Type)).type.should.equal(Type);
+        for (let type of [Type, Type.name, Type.name.toLowerCase()]) {
+          Schema(type).type.should.equal(Type);
+          Schema({type}).type.should.equal(Type);
+          (new Schema(type)).type.should.equal(Type);
         }
       }
 

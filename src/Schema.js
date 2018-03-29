@@ -5,12 +5,15 @@ import {validates} from "./ValidateMap";
 import {Any, ValidationError} from "./types";
 
 const schemas = new Map();
+
+// TODO: on validate hook (before / after);
 const plugins = new Map();
 
 function Schema (title, desc, options) {
   // recursive
   if (!new.target) return new Schema(title, desc, options);
 
+  // TODO: optimize ↓
   if (isInvalidString(title) || types.has(title)) {
     options = desc || {};
     desc = title || Any;
@@ -33,30 +36,38 @@ function Schema (title, desc, options) {
 const proto = Schema.prototype;
 
 proto.fromJS = function (desc) {
-  return isObject(desc) ?
-    // Single type
-    // ex: Schema({type: String})
-    types.has(desc.type) ?
-      {...desc, type: types.get(desc.type)} :
-      // Multiple types
-      // ex: Schema({type: [String, Number]})
-      (isArray(desc.type) && desc.type.length > 0 && desc.type.every(types.has)) ?
-        {...desc, type: desc.type.map(types.get)} :
-        // no type description, ex: Schema({foo: String, bar: Number})
-        {type: Object, properties: mapValues(desc, Schema)} :
-    isArray(desc) ?
-      (desc.length > 1) ?
-        // Tuple
-        // ex: Schema([String, Number]) | Schema([{type: String, format: 'uuid'}, Buffer])
-        {type: Array, items: desc.map(Schema)} :
-        // Array
-        // ex: Schema([String]) | Schema([{type: Buffer, ...}]) | Schema([]);
-        // ex: Schema([{type: [String, Number]}]) | Schema([{type: [String, ObjectID]}])
-        {type: Array, items: Schema(desc[0])} :
-      types.has(desc) ?
-        // ex: Schema(String)
-        {type: types.get(desc)} :
-        undefined;
+
+  let formatted =
+    isObject(desc) ?
+      // Single type
+      // ex: Schema({type: String})
+      types.has(desc.type) ?
+        {...desc, type: types.get(desc.type)} :
+        // Multiple types
+        // ex: Schema({type: [String, Number]})
+        (isArray(desc.type) && desc.type.length > 0 && desc.type.every(types.has)) ?
+          {...desc, type: desc.type.map(types.get)} :
+          // no type description, ex: Schema({foo: String, bar: Number})
+          {type: Object, properties: mapValues(desc, Schema)} :
+      isArray(desc) ?
+        (desc.length > 1) ?
+          // Tuple
+          // ex: Schema([String, Number]) | Schema([{type: String, format: 'uuid'}, Buffer])
+          {type: Array, items: desc.map(Schema)} :
+          // Array
+          // ex: Schema([String]) | Schema([{type: Buffer, ...}]) | Schema([]);
+          // ex: Schema([{type: [String, Number]}]) | Schema([{type: [String, ObjectID]}])
+          {type: Array, items: Schema(desc[0])} :
+        types.has(desc) ?
+          // ex: Schema(String)
+          {type: types.get(desc)} :
+          undefined;
+
+  if (!formatted) return;
+  if (formatted.type === Object && !formatted.properties) return;
+  if (formatted.type === Array && !formatted.items) formatted.items = Schema(Any);
+
+  return formatted;
 };
 
 proto.fromJSON = function (desc, version) {
@@ -97,18 +108,21 @@ proto.validateSync = function (value, force) {
   return true;
 };
 
+/**
+ * Check and format data;
+ * @param value
+ * @return {Promise<*>}
+ */
 proto.validateWait = async function (value) {
   let valueType = this.checkType(value);
   if (!valueType) throw new TypeError();
-  // TODO: return false or throw Error;
 
   for (let [attribute, {validator, message, error, ...v}] of this.validates(valueType, true)) {
-    let result =  await (v.async ? toAwait(validator) : validator)(value, this);
-    if (!result) throw new error(template(message, {attribute, value}));
+    let result = await (v.async ? toAwait(validator) : validator)(value, this);
+    // if (!result) throw new error(template(message, {attribute, value}));
     if (isError(result)) throw result;
   }
-
-  return true;
+  return value;
 };
 
 proto.validate = function (value, callback) {
@@ -121,8 +135,17 @@ proto.validate = function (value, callback) {
 
 proto.toJSON = function (version) {
   //TODO: to json-schema format;
-  let type = this.type;
-  return assign({}, this, {type: types.name(type)})
+  let {type, properties} = this
+    , json = {
+    type: type.toJSON ? type.toJSON() : type.name ? type.name.toLowerCase() : type,
+    required: undefined,
+  };
+
+  if (properties)
+    json.required = keys(properties).filter(prop => properties[prop].required);
+
+
+  return {...this, ...json}
 };
 
 proto.inspect = function () {
@@ -133,5 +156,7 @@ Schema.Types = types;
 Schema.validates = validates;
 Schema.schemas = schemas;
 Schema.plugins = plugins;
+Schema.fromJS = (desc) => Schema(Schema.prototype.fromJS(desc));
+Schema.fromJSON = (desc, version) => Schema(Schema.prototype.fromJSON(desc, version));
 
 export default Schema;
