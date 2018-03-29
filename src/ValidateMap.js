@@ -39,8 +39,8 @@ export default class ValidateMap extends Map {
     return this;
   }
 
-  has(attribute, scope) {
-    return (!this.scopes.has(attribute) || this.scopes.get(attribute).includes(scope)) && super.has(attribute)
+  has(keyword, scope) {
+    return (!this.scopes.has(keyword) || this.scopes.get(keyword).includes(scope)) && super.has(keyword)
   }
 }
 

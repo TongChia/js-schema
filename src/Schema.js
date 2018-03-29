@@ -1,4 +1,4 @@
-import {assign, keys, mapValues, toArray, toAwait, toSync, simpleType, isError,
+import {assign, keys, mapValues, toArray, toAwait, toSync, isError,
   isInvalidString, isObject, isArray, isUndefined, isFunction, template} from './utils';
 import {simpleTypeDic as types} from './TypeDictionary';
 import {validates} from "./ValidateMap";
@@ -25,7 +25,6 @@ function Schema (title, desc, options) {
   }
 
   let formatted = this.fromJS(desc) || this.fromJSON(desc);
-
   if (!formatted) throw new TypeError(`Invalid argument (${desc})`);
 
   assign(this, formatted);
@@ -64,7 +63,7 @@ proto.fromJS = function (desc) {
           undefined;
 
   if (!formatted) return;
-  if (formatted.type === Object && !formatted.properties) return;
+  // if (formatted.type === Object && !formatted.properties) return;
   if (formatted.type === Array && !formatted.items) formatted.items = Schema(Any);
 
   return formatted;
@@ -101,10 +100,10 @@ proto.validateSync = function (value, force) {
   let valueType = this.checkType(value);
   if (!valueType) return false;
 
-  for (let [attribute, {validator, error, message}] of this.validates(valueType))
+  for (let [keyword, {validator, error, message}] of this.validates(valueType))
     if (!validator(value, this))
       return force === 'error' ?
-        new error(message, {value, attribute}) : false;
+        new error(message, {value, keyword}) : false;
   return true;
 };
 
@@ -117,10 +116,11 @@ proto.validateWait = async function (value) {
   let valueType = this.checkType(value);
   if (!valueType) throw new TypeError();
 
-  for (let [attribute, {validator, message, error, ...v}] of this.validates(valueType, true)) {
-    let result = await (v.async ? toAwait(validator) : validator)(value, this);
-    // if (!result) throw new error(template(message, {attribute, value}));
-    if (isError(result)) throw result;
+  for (let [keyword, {validator, message, error, ...v}] of this.validates(valueType, true)) {
+    let newValue = await (v.async ? toAwait(validator) : validator)(value, this);
+    // if (!result) throw new error(template(message, {keyword, value}));
+    if (isError(newValue)) throw newValue;
+    value = newValue;
   }
   return value;
 };

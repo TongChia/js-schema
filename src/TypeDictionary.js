@@ -5,7 +5,7 @@ import {Any} from './types';
 
 export default class TypeDictionary extends Map {
 
-  names = new Map;
+  // names = new Map;
   validators = new Map;
 
   set(type, ...aliases) {
@@ -17,7 +17,7 @@ export default class TypeDictionary extends Map {
       throw new TypeError('Invalid argument, TypeDictionary.set alias required string');
 
     let name = type.name, lower = name.toLowerCase();
-    this.names.set(type, lower);
+    // this.names.set(type, lower);
     [type, name, lower].concat(aliases).forEach(alias => super.set(alias, type));
 
     return this
@@ -48,12 +48,12 @@ export default class TypeDictionary extends Map {
     return super.get(_type) === type;
   }
 
-  name(type) {
-    // TODO: optimize ↓
-    return isArray(type) ?
-      this.get(type).map(t => this.names.get(t)) :
-      this.names.get(this.get(type));
-  }
+  // name(type) {
+  //   // TODO: optimize ↓
+  //   return isArray(type) ?
+  //     this.get(type).map(t => this.names.get(t)) :
+  //     this.names.get(this.get(type));
+  // }
 
   // check(type, data) {
   //   if (this.validators.has(type))
