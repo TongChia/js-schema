@@ -1,6 +1,8 @@
-import {isUndefined, isObject, isArray, isNumber, isString, isBoolean, isDate,
+import {
+  isUndefined, isObject, isArray, isNumber, isString, isBoolean, isDate,
   isFunction, isSymbol, isRegExp, isInteger, isInvalidString, isConstructor,
-  hasBuffer, isPlainFunction} from './utils';
+  hasBuffer, isPlainFunction, toArray
+} from './utils';
 import {Any} from './types';
 
 export default class TypeDictionary extends Map {
@@ -48,18 +50,11 @@ export default class TypeDictionary extends Map {
     return super.get(_type) === type;
   }
 
-  // name(type) {
-  //   // TODO: optimize ↓
-  //   return isArray(type) ?
-  //     this.get(type).map(t => this.names.get(t)) :
-  //     this.names.get(this.get(type));
-  // }
-
-  // check(type, data) {
-  //   if (this.validators.has(type))
-  //     return this.validators.get(type)(data);
-  //   return (data instanceof type);
-  // }
+  check(types, value) {
+    return toArray(types).find(type =>
+      this.validators.has(type) ? this.validators.get(type)(value) : (value instanceof type)
+    );
+  }
 }
 
 export const simpleTypeDic = new TypeDictionary()

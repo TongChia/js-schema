@@ -67,11 +67,9 @@ export const validates = new ValidateMap()
     if (extra.length) return new ValidationError('extra' + extra);
 
     for (let prop of props) {
-      let _schema = properties[prop], _data = data[prop], result;
-      if (isUndefined(_data) && _schema.required) throw new ValidationError('Undefined');
-      result = await _schema.validateWait(_data);
-      if (isError(result)) throw result;
-      data[prop] = result;
+      let _schema = properties[prop], _data = data[prop];
+      if (isUndefined(_data) && _schema.required) throw new ValidationError('required');
+      data[prop] = await _schema.validateWait(_data);
     }
 
     return data;

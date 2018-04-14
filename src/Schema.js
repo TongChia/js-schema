@@ -79,8 +79,7 @@ proto.fromJSON = function (desc, version) {
  * @return {undefined|T}
  */
 proto.checkType = function (value) {
-  return toArray(this.type).find(type => types.validators.has(type) ?
-    types.validators.get(type)(value) : (value instanceof type));
+  return types.check(this.type, value)
 };
 
 proto.validates = function (type, withAsync) {
@@ -103,7 +102,7 @@ proto.validateSync = function (value, force) {
   for (let [keyword, {validator, error, message}] of this.validates(valueType))
     if (!validator(value, this))
       return force === 'error' ?
-        new error(message, {value, keyword}) : false;
+        new error(template(message, {value, keyword})) : false;
   return true;
 };
 
@@ -117,10 +116,12 @@ proto.validateWait = async function (value) {
   if (!valueType) throw new TypeError();
 
   for (let [keyword, {validator, message, error, ...v}] of this.validates(valueType, true)) {
-    let newValue = await (v.async ? toAwait(validator) : validator)(value, this);
-    // if (!result) throw new error(template(message, {keyword, value}));
-    if (isError(newValue)) throw newValue;
-    value = newValue;
+    if (v.async)
+      value = await toAwait(validator)(value, this);
+    else if (v.await)
+      value = await validator(value, this);
+    else if (!validator(value, this))
+      throw new error(template(message, {keyword, value}));
   }
   return value;
 };
