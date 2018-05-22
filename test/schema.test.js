@@ -63,32 +63,32 @@ describe('SCHEMA TEST', () => {
   });
 
 
-  it('Create schema', () => {
+  it('Create schema', async () => {
 
     const schema = new Schema({
       name:    String,
       binary:  Buffer,
       living:  Boolean,
-      updated: { type: Date, default: Date.now },
+      updated: { type: Date, default: Date.now, asyncChecker: 1 },
       age:     { type: Number, min: 18, max: 65 },
       // // mixed:   Schema.Types.Mixed,
       // // _someId: Schema.Types.ObjectId,
-      // array:      [],
+      array:      [],
       ofString:   [String],
       ofNumber:   [Number],
-      // ofDates:    [Date],
-      // ofBuffer:   [Buffer],
-      // ofBoolean:  [Boolean],
+      ofDates:    [Date],
+      ofBuffer:   [Buffer],
+      ofBoolean:  [Boolean],
       // // ofMixed:    [Schema.Types.Mixed],
       // // ofObjectId: [Schema.Types.ObjectId],
       ofArrays:   [[]],
       ofArrayOfNumbers: [[Number]],
-      nested: {
+      nested: {type: Object, properties: {
         stuff: { type: String, lowercase: true, trim: true }
-      }
+      }, asynctest: true},
     });
 
-    const result = schema.validateSync({
+    const result = await schema.validate({
       name: 'TongChia',
       binary: new Buffer([0xff, 0x01, 0xf1]),
       living: true,
@@ -97,13 +97,13 @@ describe('SCHEMA TEST', () => {
       ofString: ['foo', 'bar'],
       ofNumber: [1, 2, 0],
       ofArrays: [[1, 'foo', false]],
-      ofArrayOfNumbers: [[123]],
+      ofArrayOfNumbers: [[123, 456], [789]],
       nested: {
         stuff: 'foobar'
       }
     });
 
-    result.should.be.true;
+    result.nested.start.should.instanceOf(Date)
 
   });
 
@@ -119,17 +119,5 @@ describe('SCHEMA TEST', () => {
       done();
     });
   });
-
-  it.skip('Create schema with a constructor(or class)', (done) => {
-    const stringSchema = new Schema(String);
-    const numberSchema = new Schema(Number);
-
-    stringSchema.validateSync('foo bar', (result) => {
-      result.should.be.equal(true);
-      numberSchema.validateSync(1234);
-      done();
-    });
-  });
-
 
 });

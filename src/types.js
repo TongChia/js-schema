@@ -12,9 +12,11 @@ Any.prototype.toJSON = function () {
 
 export class ValidationError extends Error {
 
-  constructor(message, errors) {
-    super(message);
+  constructor(message, errors, ...others) {
+    super(message, ...others);
+    // TODO: optimize errors;
     if (errors) this.errors = errors;
+    this.code = 400;
   }
 }
 

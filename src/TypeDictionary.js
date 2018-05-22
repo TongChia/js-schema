@@ -63,11 +63,10 @@ export const simpleTypeDic = new TypeDictionary()
   .set(Array, 'arr', isArray)
   .set(String, 'str', isString)
   .set(Number, 'num', 'float', isNumber)
-  // .set('Integer', 'integer', 'int', isInteger)
   .set(Boolean, 'bool', isBoolean)
   .set(Date, 'datetime', isDate)
   .set(Function, 'fun', isFunction)
-  .set(Symbol, 'fun', isSymbol)
-  .set(RegExp, 'fun', isRegExp);
+  .set(Symbol, isSymbol)
+  .set(RegExp, isRegExp);
 
 if (hasBuffer) simpleTypeDic.set(Buffer, 'buff');

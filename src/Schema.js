@@ -1,8 +1,8 @@
-import {assign, keys, mapValues, toArray, toAwait, toSync, isError,
-  isInvalidString, isObject, isArray, isUndefined, isFunction, template} from './utils';
+import {assign, keys, mapValues, toSync, isError, isInvalidString, toArray, isAwait,
+  isObject, isArray, isUndefined, isAsyncFunction, template, toAwait} from './utils';
 import {simpleTypeDic as types} from './TypeDictionary';
 import {validates} from "./ValidateMap";
-import {Any, ValidationError} from "./types";
+import {Any} from "./types";
 
 const schemas = new Map();
 
@@ -47,7 +47,7 @@ proto.fromJS = function (desc) {
         (isArray(desc.type) && desc.type.length > 0 && desc.type.every(types.has)) ?
           {...desc, type: desc.type.map(types.get)} :
           // no type description, ex: Schema({foo: String, bar: Number})
-          {type: Object, properties: mapValues(desc, Schema)} :
+          {type: Object, properties: desc} :
       isArray(desc) ?
         (desc.length > 1) ?
           // Tuple
@@ -65,99 +65,80 @@ proto.fromJS = function (desc) {
   if (!formatted) return;
   // if (formatted.type === Object && !formatted.properties) return;
   if (formatted.type === Array && !formatted.items) formatted.items = Schema(Any);
+  if (formatted.properties) formatted.properties = mapValues(formatted.properties, Schema);
 
   return formatted;
 };
 
-proto.fromJSON = function (desc, version) {
+proto.fromJSON = function (desc, syntax) {
   //TODO: parse json-schema
 };
 
-/**
- * Check if `schema.type` contains the type of `value`.
- * @param value
- * @return {undefined|T}
- */
-proto.checkType = function (value) {
-  return types.check(this.type, value)
-};
+proto.validate = function (value) {
+  let type = types.check(this.type, value)
+    , verifies = keys(this).filter(key => validates.has(key, type))
+    , waiting = [];
 
-proto.validates = function (type, withAsync) {
-  return keys(this).reduce((map, key) => {
-    if (withAsync && validates.has('async ' + key, type)) {
-      map.set(key, validates.get('async ' + key))
-    } else if (validates.has(key, type)) {
-      map.set(key, validates.get(key))
+  if (!type) return new TypeError(`Value ${value} not ins of ${toArray(this.type).map(t => t.name).join(',')}`);
+
+  let finish = async () => {
+    for (let [verify, validator] of waiting) {
+      let result = await validator(value, this);
+      if (isError(result)) return result;
+      if (!result) {
+        let {message, error} = validates.get(verify);
+        return new error(template(message, {verify, value}));
+      }
     }
-    return map;
-  }, new Map)
-};
+  };
 
-proto.validateSync = function (value, force) {
-  if (force) return toSync(this.validate)(value);
-
-  let valueType = this.checkType(value);
-  if (!valueType) return false;
-
-  for (let [keyword, {validator, error, message}] of this.validates(valueType))
-    if (!validator(value, this))
-      return force === 'error' ?
-        new error(template(message, {value, keyword})) : false;
-  return true;
-};
-
-/**
- * Check and format data;
- * @param value
- * @return {Promise<*>}
- */
-proto.validateWait = async function (value) {
-  let valueType = this.checkType(value);
-  if (!valueType) throw new TypeError();
-
-  for (let [keyword, {validator, message, error, ...v}] of this.validates(valueType, true)) {
-    if (v.async)
-      value = await toAwait(validator)(value, this);
-    else if (v.await)
-      value = await validator(value, this);
-    else if (!validator(value, this))
-      throw new error(template(message, {keyword, value}));
+  for (let verify of verifies) {
+    let result, {validator, async, message, error} = validates.get(verify);
+    if (isAsyncFunction(validator)) waiting.push([verify, validator]);
+    else if (async) waiting.push([verify, toAwait(validator)]);
+    else {
+      try {
+        result = validator(value, this);
+      } catch (err) {
+        return new error(err.message, err);
+      }
+      if (!result) return new error(template(message, {verify, value}));
+      if (isError(result)) return result;
+      if (isAwait(result)) waiting.push([verify, () => result]);
+    }
   }
-  return value;
+
+  if (waiting.length)
+    return {then: (success, filed) => finish().then(success, filed)};
 };
 
-proto.validate = function (value, callback) {
-  if (!isFunction(callback)) return this.validateSync(value, callback);
-
-  return this.validateWait(value)
-    .then(result => callback(null, result))
-    .catch(err => callback(err));
-};
-
-proto.toJSON = function (version) {
+proto.toJSON = function (syntax) {
   //TODO: to json-schema format;
   let {type, properties} = this
-    , json = {
+    , fixed = {
     type: type.toJSON ? type.toJSON() : type.name ? type.name.toLowerCase() : type,
     required: undefined,
   };
 
   if (properties)
-    json.required = keys(properties).filter(prop => properties[prop].required);
+    fixed.required = keys(properties).filter(prop => properties[prop].required);
 
-
-  return {...this, ...json}
+  return {...this, ...fixed}
 };
 
 proto.inspect = function () {
-  return `Schema${this.$title ? ' ' + this.$title : ''} {type: ${this.type.name}}`
+  return ['Schema', this.$title, '{type:', toArray(this.type).map(t => t.name).join(',') + '}'].filter(Boolean).join(' ');
 };
+
+proto[Symbol.toStringTag] = () => 'Schema';
 
 Schema.Types = types;
 Schema.validates = validates;
 Schema.schemas = schemas;
 Schema.plugins = plugins;
-Schema.fromJS = (desc) => Schema(Schema.prototype.fromJS(desc));
-Schema.fromJSON = (desc, version) => Schema(Schema.prototype.fromJSON(desc, version));
+// Schema.fromJS = (desc) => Schema(proto.fromJS(desc));
+// Schema.fromJSON = (desc, version) => Schema(proto.fromJSON(desc, version));
+// Schema.verify = (schema, value, wait, feed) => {
+// };
 
 export default Schema;
