@@ -1,4 +1,4 @@
-export function Any (value) {
+function Any (value) {
   if(!(this instanceof Any)) return new Any(value);
 
   this.value = value;
@@ -10,7 +10,7 @@ Any.prototype.toJSON = function () {
   return this.value;
 };
 
-export class ValidationError extends Error {
+class ValidationError extends Error {
 
   constructor(message, errors, ...others) {
     super(message, ...others);
@@ -30,4 +30,4 @@ export class ValidationError extends Error {
 //   else this.stack = (new Error).stack;
 // }
 
-ValidationError.prototype.name = 'ValidationError';
+module.exports = {Any, ValidationError};

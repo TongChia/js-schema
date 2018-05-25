@@ -1,6 +1,41 @@
-js-schema
-=========
+js-schema (with Sugar.js)
+=========================
 JS Schema validation, compatible with `json-schema`
+
+Quick start
+-----------
+```js
+const S = require('sugar');
+const schema = S.String.maxLength(200).minLength(5).match(/hello/);
+// => Schema {isValid: function (value) { /* check value */ }, ...}
+```
+```js
+const schema = S.Object.properties({
+  name: S.String.maxLength(20).required(),
+  age : S.Number.max(150).min(0),
+  birthday: S.Date
+});
+schema.isValid({
+  name: 'Tom',
+  age: 12,
+  birthday: now Date()
+});
+// => true
+```
+toJsonSchema
+```js
+S.Number.max(10).min(1).toJSON();
+// {
+//   type: 'number',
+//   max: 10,
+//   min: 1
+// }
+S.String.toJSON();
+// {
+//   type: 'string'
+// }
+```
+
 
 API
 ---

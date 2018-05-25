@@ -7,7 +7,7 @@
       "debug": true,
       "useBuiltIns": "entry"
     }],
-    "@babel/preset-stage-0"
+    ["@babel/preset-stage-0", {"decoratorsLegacy": true}]
   ]
 }
 

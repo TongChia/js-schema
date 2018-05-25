@@ -1,144 +1,103 @@
-import {assign, keys, mapValues, toSync, isError, isInvalidString, toArray, isAwait,
-  isObject, isArray, isUndefined, isAsyncFunction, template, toAwait} from './utils';
-import {simpleTypeDic as types} from './TypeDictionary';
-import {validates} from "./ValidateMap";
-import {Any} from "./types";
+const Sugar = require('sugar-core');
+const _ = require('./utils');
+const {ValidationError} = require('./types');
+const verifications = require('./validates');
 
-const schemas = new Map();
+const validates = new Map;
+const {has, add, forEach, keys} = Sugar.Object;
+const {append} = Sugar.Array;
+const {partial} = Sugar.Function;
 
-// TODO: on validate hook (before / after);
-const plugins = new Map();
+function createSchemaWrap (_super, keyword, parameter) {
 
-function Schema (title, desc, options) {
-  // recursive
-  if (!new.target) return new Schema(title, desc, options);
+  let fn = function Schema (obj) {this.raw = obj};
+  let _v = validates.get(keyword);
+  let isAwait = _.isAsyncFunction(_v.validator);
 
-  // TODO: optimize ↓
-  if (isInvalidString(title) || types.has(title)) {
-    options = desc || {};
-    desc = title || Any;
-  } else {
-    desc = desc || Any;
-    options = options || {};
-    schemas.set(title, this);
-    this.$title = title;
-  }
+  fn.toJSON = () => add(_super.toJSON(), {[keyword]: parameter});
 
-  let formatted = this.fromJS(desc) || this.fromJSON(desc);
-  if (!formatted) throw new TypeError(`Invalid argument (${desc})`);
+  fn.isValid = function (data, cb, next) {
 
-  assign(this, formatted);
+    if (cb) {
 
-  if (options.freeze) Object.freeze(this);
+      let _cb = (errors, result) => {
+        if (!_v.validator(result, parameter))
+          errors = append(errors || [], new _v.error(_v.message));
+
+        return cb(errors, result);
+      };
+
+      return next ? next(data, _cb, _super.isValid) : _cb(null, data);
+
+    } else {
+      // TODO: force sync;
+      // check data & skip async validator;
+      return _super.isValid(data) && (isAwait || _v.async || _v.validator(data, parameter));
+    }
+  };
+
+  // let descriptor = Object.getOwnPropertyDescriptor(fn.prototype, 'constructor');
+  fn.prototype = Object.create(_super.prototype);
+  let handler = {
+    get: function(target, prop) {
+      return (prop in target) ? target[prop] : _super[prop];
+    },
+    // construct: function(target, args) {
+    //   let obj = Object.create(fn.prototype);
+    //   this.apply(target, obj, args);
+    //   return obj;
+    // },
+    // apply: function(target, that, args) {
+    //   _super.apply(that,args);
+    //   fn.apply(that,args);
+    // }
+  };
+  let proxy = new Proxy(fn, handler);
+  // descriptor.value = proxy;
+  // Object.defineProperty(fn.prototype, 'constructor', descriptor);
+  return proxy;
 }
 
-const proto = Schema.prototype;
 
-proto.fromJS = function (desc) {
+const ensureSugarNamespace = (namespace) => {
+  let ns = has(Sugar, namespace) ?
+    Sugar[namespace] :
+    Sugar.createNamespace(namespace);
 
-  let formatted =
-    isObject(desc) ?
-      // Single type
-      // ex: Schema({type: String})
-      types.has(desc.type) ?
-        {...desc, type: types.get(desc.type)} :
-        // Multiple types
-        // ex: Schema({type: [String, Number]})
-        (isArray(desc.type) && desc.type.length > 0 && desc.type.every(types.has)) ?
-          {...desc, type: desc.type.map(types.get)} :
-          // no type description, ex: Schema({foo: String, bar: Number})
-          {type: Object, properties: desc} :
-      isArray(desc) ?
-        (desc.length > 1) ?
-          // Tuple
-          // ex: Schema([String, Number]) | Schema([{type: String, format: 'uuid'}, Buffer])
-          {type: Array, items: desc.map(Schema)} :
-          // Array
-          // ex: Schema([String]) | Schema([{type: Buffer, ...}]) | Schema([]);
-          // ex: Schema([{type: [String, Number]}]) | Schema([{type: [String, ObjectID]}])
-          {type: Array, items: Schema(desc[0])} :
-        types.has(desc) ?
-          // ex: Schema(String)
-          {type: types.get(desc)} :
-          undefined;
+  if (!has(ns, 'isValid'))
+    ns.defineStatic({isValid: (v, cb) => {
+      let valid = _['is' + namespace](v); // TODO: check has;
+      return cb ? cb(valid ? new TypeError('Value type should be ' + namespace) : null, v) : valid;
+    }});
 
-  if (!formatted) return;
-  // if (formatted.type === Object && !formatted.properties) return;
-  if (formatted.type === Array && !formatted.items) formatted.items = Schema(Any);
-  if (formatted.properties) formatted.properties = mapValues(formatted.properties, Schema);
+  if (!has(ns, 'toJSON'))
+    ns.defineStatic({toJSON: () => ({type: namespace.toLowerCase()})});
 
-  return formatted;
+  return ns;
 };
 
-proto.fromJSON = function (desc, syntax) {
-  //TODO: parse json-schema
-};
+const addKeyword = (namespace, keyword, validate) => {
+  let {
+    validator = validate,
+    message = '${value} is not validated',
+    error = ValidationError
+  } = validate;
+  let ns = ensureSugarNamespace(namespace);
 
-proto.validate = function (value) {
-  let type = types.check(this.type, value)
-    , verifies = keys(this).filter(key => validates.has(key, type))
-    , waiting = [];
-
-  if (!type) return new TypeError(`Value ${value} not ins of ${toArray(this.type).map(t => t.name).join(',')}`);
-
-  let finish = async () => {
-    for (let [verify, validator] of waiting) {
-      let result = await validator(value, this);
-      if (isError(result)) return result;
-      if (!result) {
-        let {message, error} = validates.get(verify);
-        return new error(template(message, {verify, value}));
-      }
+  validates.set(keyword, {validator, message, error});
+  ns.defineStatic({
+    [keyword]: function (arg) {
+      return createSchemaWrap(this, keyword, arg)
     }
-  };
-
-  for (let verify of verifies) {
-    let result, {validator, async, message, error} = validates.get(verify);
-    if (isAsyncFunction(validator)) waiting.push([verify, validator]);
-    else if (async) waiting.push([verify, toAwait(validator)]);
-    else {
-      try {
-        result = validator(value, this);
-      } catch (err) {
-        return new error(err.message, err);
-      }
-      if (!result) return new error(template(message, {verify, value}));
-      if (isError(result)) return result;
-      if (isAwait(result)) waiting.push([verify, () => result]);
-    }
-  }
-
-  if (waiting.length)
-    return {then: (success, filed) => finish().then(success, filed)};
+  })
 };
 
-proto.toJSON = function (syntax) {
-  //TODO: to json-schema format;
-  let {type, properties} = this
-    , fixed = {
-    type: type.toJSON ? type.toJSON() : type.name ? type.name.toLowerCase() : type,
-    required: undefined,
-  };
+Sugar.Function.defineStatic({isValid: _.isFunction});
 
-  if (properties)
-    fixed.required = keys(properties).filter(prop => properties[prop].required);
+keys(_.types).forEach((type) => {
+  ensureSugarNamespace(type).defineStatic('defineValidate', partial(addKeyword, type))
+});
 
-  return {...this, ...fixed}
-};
-
-proto.inspect = function () {
-  return ['Schema', this.$title, '{type:', toArray(this.type).map(t => t.name).join(',') + '}'].filter(Boolean).join(' ');
-};
-
-proto[Symbol.toStringTag] = () => 'Schema';
-
-Schema.Types = types;
-Schema.validates = validates;
-Schema.schemas = schemas;
-Schema.plugins = plugins;
-// Schema.fromJS = (desc) => Schema(proto.fromJS(desc));
-// Schema.fromJSON = (desc, version) => Schema(proto.fromJSON(desc, version));
-// Schema.verify = (schema, value, wait, feed) => {
-// };
-
-export default Schema;
+forEach(verifications, (verification, type) => {
+  forEach(verification, (validate, keyword) => Sugar[type].defineValidate(keyword, validate))
+});
