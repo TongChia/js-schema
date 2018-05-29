@@ -4,6 +4,10 @@ JS Schema validation, compatible with `json-schema`
 
 QUICK START
 -----------
+install with npm
+```bash
+npm install -S '@tongchia/jsschema-sugar'
+```
 ```js
 const Sugar = require('sugar');
 const schema = Sugar.String.maxLength(200).minLength(5).match(/hello/);
