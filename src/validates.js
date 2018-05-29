@@ -39,10 +39,10 @@ module.exports = {
         cb(multipleError(map(results, 'error')), map(results, 'value'));
 
       if (isQueue) {
-        let queues = items.map((schema, i) => partial(schema.isValid, isUndefined(data[prop]) ? null : data[prop]4r));
+        let queues = items.map((schema, i) => partial(schema.isValid, isUndefined(data[i]) ? null : data[i]));
         return parallel(reflectAll(queues), _cb)
       } else {
-        let checks = data.map((d) => partial(schema.isValid, d));
+        let checks = data.map((d) => partial(items.isValid, isUndefined(d) ? null : d));
         return parallel(reflectAll(checks), _cb)
       }
     }

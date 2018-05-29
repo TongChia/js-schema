@@ -1,6 +1,6 @@
 {
-  "name": "js-schema",
-  "version": "0.0.1",
+  "name": "@tongchia/jsschema-sugar",
+  "version": "0.1.1",
   "description": "js schema",
   "main": "Schema.js",
   "scripts": {
@@ -12,7 +12,8 @@
     "url": "git+https://github.com/TongChia/js-schema.git"
   },
   "keywords": [
-    "schema"
+    "schema", "js-schema", "json-chema", "sugar",
+    "sugarjs", "type", "validate", "validation"
   ],
   "author": "TongChia <tongchia@live.com>",
   "license": "MIT",
@@ -21,6 +22,7 @@
   },
   "homepage": "https://github.com/TongChia/js-schema#readme",
   "devDependencies": {
+    "sugar": "^2.0.4",
     "@babel/cli": "^7.0.0-beta.47",
     "@babel/core": "^7.0.0-beta.47",
     "@babel/polyfill": "^7.0.0-beta.47",
@@ -35,7 +37,6 @@
   },
   "dependencies": {
     "async": "^2.6.1",
-    "sugar": "^2.0.4",
     "sugar-core": "^2.0.4"
   }
 }

@@ -2,7 +2,7 @@
   "presets": [
     ["@babel/env", {
       "targets": {
-        "node": "current"
+        "node": "8.0"
       },
       "debug": true,
       "useBuiltIns": "entry"
