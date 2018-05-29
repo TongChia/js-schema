@@ -2,18 +2,26 @@ js-schema (with Sugar.js)
 =========================
 JS Schema validation, compatible with `json-schema`
 
-Quick start
+QUICK START
 -----------
 ```js
-const S = require('sugar');
-const schema = S.String.maxLength(200).minLength(5).match(/hello/);
-// => Schema {isValid: function (value) { /* check value */ }, ...}
+const Sugar = require('sugar');
+const schema = Sugar.String.maxLength(200).minLength(5).match(/hello/);
+// -> Schema {isValid: function (value) { /* check value */ }, ...}
+schema.isValid('hello world');
+// -> true
+schema.isValid('hello');
+// -> false
+schema.isValid('foo', (err, data) => {
+  assert.ifError(err);
+  assert.equal('foo', data);
+})
 ```
 ```js
-const schema = S.Object.properties({
-  name: S.String.maxLength(20).required(),
-  age : S.Number.max(150).min(0),
-  birthday: S.Date
+const schema = Sugar.Object.properties({
+  name: Sugar.String.maxLength(20).required(),
+  age : Sugar.Number.max(150).min(0),
+  birthday: Sugar.Date
 });
 schema.isValid({
   name: 'Tom',
@@ -24,31 +32,51 @@ schema.isValid({
 ```
 toJsonSchema
 ```js
-S.Number.max(10).min(1).toJSON();
+Sugar.Number.max(10).min(1).toJSON();
 // {
 //   type: 'number',
 //   max: 10,
 //   min: 1
 // }
-S.String.toJSON();
+Sugar.String.toJSON();
 // {
 //   type: 'string'
 // }
 ```
 
 
-API
+VALIDATE
 ---
 
 ### BUILT-IN
+- String
+  - enum
+  - match
+  - minLength
+  - maxLength
+- Number
+  - min
+  - max
+  - integer
+- Date
+  - after
+  - before
+- Array
+  - minItems
+  - maxItems
+  - unique
+  - items
+- Object
+  - properties
+  - required
 
 ### CUSTOM
 #### Sync validate
 ```javascript
-Schema.validates.set(
+SugarNamespace.validates.set(
   'keyword', // the keyword
   {
-    validator: (value) => check(value), // return true/false;
+    validator: (value, parameter) => check(value, parameter), // return true/false;
     message: '${keyword} error, ${value} too big',
     error: RangeError // defalut ValidationError;
   }
@@ -57,12 +85,10 @@ Schema.validates.set(
 
 #### Async validate
 ```javascript
-
-Schema.validates.set(
+SugarNamespace.validates.set(
   'keyword',
   {
-    async: true,
-    validator: (value, callback) => {
+    validator: (value, parameter, callback) => {
       if (value)
         return callback(null, value);
       else
@@ -70,22 +96,21 @@ Schema.validates.set(
     }
   }
 )
-
-Schema.validates.set(
-  'keyword',
-  {
-    validator: async (value) => { // return value, throw error;
-      if(await checkWithAsync(value))
-        return value;
-      throw new ValidationError('...');
-    }
-  }
-)
-
-Schema.validates.set(
-  'keyword',
-  {
-    validator: (value) => new Promise((s, r) => {})
-  }
-)
 ```
+
+#### TODO
+- [x] custom validate;
+- [x] async validator (with callback);
+- [ ] async validator (es2015);
+- [ ] format validate;
+- [ ] toModel
+  - [ ] MobX;
+  - [ ] MongoDB;
+    - [ ] mQuery;
+- [ ] mongoose schema;
+- [ ] json-schema;
+  - [ ] parse json-schema;
+  - [ ] generate json-schema;
+  - [ ] test with `ajv`;
+- [ ] google protocol-buffers;
+- [ ] GraphQL;
