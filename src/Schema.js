@@ -4,60 +4,66 @@ const {ValidationError} = require('./types');
 const verifications = require('./validates');
 
 const validates = new Map;
+const {types, isUndefined, isAsyncFunction, isNil} = _;
 const {has, add, forEach, keys} = Sugar.Object;
-const {append} = Sugar.Array;
 const {partial} = Sugar.Function;
+const {concatError} = ValidationError;
 
-function createSchemaWrap (_super, keyword, parameter) {
+const Schema =
+function parseJsonSchema (json) {
+  //TODO: parse json-schema
+};
 
-  let fn = function Schema (obj) {this.raw = obj};
+const createSchemaWrap = (_super, keyword, parameter) => {
+
+  let fn = function SchemaChain (obj) {this.raw = obj};
   let _v = validates.get(keyword);
-  let isAwait = _.isAsyncFunction(_v.validator);
+  let {validator, message, error} = _v;
+  let isAwait = isAsyncFunction(validator);
+
+  if (_.isUndefined(parameter)) parameter = true;
 
   fn.toJSON = () => add(_super.toJSON(), {[keyword]: parameter});
 
-  fn.isValid = function (data, cb, next) {
+  fn.isValid = function (data, cb) {
 
-    if (cb) {
+    // TODO: fix  ↓  global / Window;
+    let toJSON = this.toJSON || fn.toJSON;
+    let json = toJSON();
 
-      let _cb = (errors, result) => {
-        if (!_v.validator(result, parameter))
-          errors = append(errors || [], new _v.error(_v.message));
+    // TODO: force sync;
+    if (!cb) // check data & skip async validator;
+      return _super.isValid.call(this, data) && (isAwait || _v.async || validator.call(json, data, parameter));
 
+    return _super.isValid.call(this, data, (errors, result) => {
+      if (isUndefined(result))
         return cb(errors, result);
-      };
 
-      return next ? next(data, _cb, _super.isValid) : _cb(null, data);
+      if (validator.length >= 3)
+        return validator.call(json, result, parameter, (err, res) => {
+          return cb(concatError(errors, err), res)
+        });
 
-    } else {
-      // TODO: force sync;
-      // check data & skip async validator;
-      return _super.isValid(data) && (isAwait || _v.async || _v.validator(data, parameter));
-    }
+      if (!validator.call(json, data, parameter))
+        errors = concatError(errors, new error(message));
+      return cb(errors, result)
+    })
   };
 
-  // let descriptor = Object.getOwnPropertyDescriptor(fn.prototype, 'constructor');
-  fn.prototype = Object.create(_super.prototype);
   let handler = {
     get: function(target, prop) {
       return (prop in target) ? target[prop] : _super[prop];
     },
-    // construct: function(target, args) {
-    //   let obj = Object.create(fn.prototype);
-    //   this.apply(target, obj, args);
-    //   return obj;
-    // },
-    // apply: function(target, that, args) {
-    //   _super.apply(that,args);
-    //   fn.apply(that,args);
-    // }
+    // TODO: create Model
+    construct: function(target, args) {
+      return new _super(...args);
+    },
+    apply: function(target, that, args) {
+      return _super.apply(that, args);
+    }
   };
-  let proxy = new Proxy(fn, handler);
-  // descriptor.value = proxy;
-  // Object.defineProperty(fn.prototype, 'constructor', descriptor);
-  return proxy;
-}
-
+  return new Proxy(fn, handler);
+};
 
 const ensureSugarNamespace = (namespace) => {
   let ns = has(Sugar, namespace) ?
@@ -65,9 +71,17 @@ const ensureSugarNamespace = (namespace) => {
     Sugar.createNamespace(namespace);
 
   if (!has(ns, 'isValid'))
-    ns.defineStatic({isValid: (v, cb) => {
-      let valid = _['is' + namespace](v); // TODO: check has;
-      return cb ? cb(valid ? new TypeError('Value type should be ' + namespace) : null, v) : valid;
+    ns.defineStatic({isValid: function (v, cb) {
+      let isUnd = isNil(v);
+      let valid = !isUnd && _['is' + namespace](v);
+
+      if (!cb) return valid;
+
+      let err =
+        isUnd ? ValidationError('${title} is not defined.', {error: 'Undefined'}) :
+        valid ? null : ValidationError('${title} type should be ' + namespace + '.', {error: 'TypeError'});
+
+      return cb(err, v);
     }});
 
   if (!has(ns, 'toJSON'))
@@ -79,7 +93,7 @@ const ensureSugarNamespace = (namespace) => {
 const addKeyword = (namespace, keyword, validate) => {
   let {
     validator = validate,
-    message = '${value} is not validated',
+    message = 'Value is not validated',
     error = ValidationError
   } = validate;
   let ns = ensureSugarNamespace(namespace);
@@ -92,12 +106,14 @@ const addKeyword = (namespace, keyword, validate) => {
   })
 };
 
-Sugar.Function.defineStatic({isValid: _.isFunction});
+// Sugar.Function.defineStatic({isValid: isFunction});
 
-keys(_.types).forEach((type) => {
+keys(types).forEach((type) => {
   ensureSugarNamespace(type).defineStatic('defineValidate', partial(addKeyword, type))
 });
 
 forEach(verifications, (verification, type) => {
   forEach(verification, (validate, keyword) => Sugar[type].defineValidate(keyword, validate))
 });
+
+module.exports = Schema;

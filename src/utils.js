@@ -1,6 +1,7 @@
 const _ = module.exports = {};
 
 _.hasBuffer = typeof Buffer !== 'undefined';
+_.hasSymbol = typeof Symbol !== 'undefined';
 
 _.simpleType = (v) => Object.prototype.toString.call(v).match(/^\[object (\w+)]$/)[1];
 
@@ -30,8 +31,7 @@ _.and = (fn1, fn2, ...others) => others.length ? _.and(_.and(fn1, fn2), ...other
 
 _.isPromisify = _.and(_.isObject, ({then}) => _.isPlainFunction(then));
 
-_.template = (str, obj) => (new Function(...(_.keys(obj)), 'return `' + str + '`')(...(_.values(obj))));
+_.template = (str, obj) => (new Function(...(Object.keys(obj)), 'return `' + str + '`')(...(Object.values(obj))));
 
-_.types = {Array, Object, String, Number, Boolean, Date};
-
+_.types = {Object, Array, Number, String, Boolean, Date, RegExp, Function, Error};
 if (_.hasBuffer) _.types.Buffer = Buffer;

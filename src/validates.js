@@ -1,6 +1,10 @@
 const Sugar = require('sugar-core');
-const {isUndefined} = require('./utils');
-const {every} = Sugar.Array;
+const {parallel, reflectAll} = require('async');
+const {isArray, isUndefined} = require('./utils');
+const {ValidationError} = require('./types');
+const {multipleError} = ValidationError;
+
+const {partial} = Sugar.Function;
 
 module.exports = {
   String: {
@@ -12,7 +16,7 @@ module.exports = {
   Number: {
     min    : (data, min) => (data >= min),
     max    : (data, max) => (data <= max),
-    integer: (data, integer) => (integer === false || Number.isInteger(data))
+    integer: (data, integer) => !integer || Number.isInteger(data),
   },
   Date: {
     after : (data, after) => (new Date(data) > new Date(after)),
@@ -21,13 +25,47 @@ module.exports = {
   Array: {
     minItems: (data, minItems) => (data.length >= minItems),
     maxItems: (data, maxItems) => (data.length <= maxItems),
-    unique  : (data, unique) => (!unique || data.every((v, i, d) => d.indexOf(v) === i)),
-    items   : (data, schemas) => Array.isArray(schemas) ?
-      every(schemas, (Schema, index) => Schema.isValid(data[index])) :
-      every(data, (item) => schemas.isValid(item))
+    unique  : (data, unique) => !unique || data.every((v, i, d) => d.indexOf(v) === i),
+    items   : function (data, items, cb) {
+      let isQueue = isArray(items);
+      let {every, map} = Sugar.Array;
+
+      if (!cb)
+        return isQueue ?
+          every(items, (schema, index) => schema.isValid(data[index])) :
+          every(data, (item) => items.isValid(item));
+
+      let _cb = (err, results) =>
+        cb(multipleError(map(results, 'error')), map(results, 'value'));
+
+      if (isQueue) {
+        let queues = items.map((schema, i) => partial(schema.isValid, isUndefined(data[prop]) ? null : data[prop]4r));
+        return parallel(reflectAll(queues), _cb)
+      } else {
+        let checks = data.map((d) => partial(schema.isValid, d));
+        return parallel(reflectAll(checks), _cb)
+      }
+    }
   },
   Object: {
-    properties: (data, props) =>
-      Sugar.Object.every(props, (Schema, key) => isUndefined(data[key]) || Schema.isValid(data[key])),
+    properties: function (data, props, cb) {
+      let {every, map, has, filter} = Sugar.Object;
+      let checkUndefined = has(this, 'required');
+      let required = this.required || [];
+
+      if (!cb)
+        return every(props, (Schema, key) => Schema.isValid(data[key]));
+
+      let checks = map(props, (schema, prop) => partial(schema.isValid, isUndefined(data[prop]) ? null : data[prop]));
+      return parallel(reflectAll(checks), (err, results) => {
+        let errors = map(results, 'error');
+
+        if (checkUndefined)
+          errors = filter(errors, (e, k) => !!e && (e.type !== 'Undefined' || required.includes(k)));
+
+        return cb(multipleError(errors), map(results, 'value'));
+      })
+    },
+    required: () => true
   }
 };
