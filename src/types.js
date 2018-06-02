@@ -28,7 +28,7 @@ function ValidationError (message, ctx) {
 
   ctx = {path: '/', title: 'variable', valid: 'validate', ...ctx};
   this.type = ctx.error || 'ValidationError';
-  this.code = ctx.code || 400;
+  this.status = ctx.status || 400;
   this.message = template(message, ctx);
 
 }

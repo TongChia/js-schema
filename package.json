@@ -12,7 +12,7 @@
     "url": "git+https://github.com/TongChia/js-schema.git"
   },
   "keywords": [
-    "schema", "js-schema", "json-chema", "sugar",
+    "schema", "js-schema", "json-schema", "sugar",
     "sugarjs", "type", "validate", "validation"
   ],
   "author": "TongChia <tongchia@live.com>",
