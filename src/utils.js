@@ -18,7 +18,6 @@ _.isConstructor = (fn) => (_.isPlainFunction(fn) && fn.prototype && fn.name);
 _.isArray = Array.isArray;
 _.isNaN = Number.isNaN;
 _.isInteger = Number.isInteger;
-// _.isNil = (v) => (((t) => (t && (t === 'Null' || t === 'Undefined')))(_.simpleType(v)));
 _.isNil = (v) => (_.isUndefined(v) || _.isNull(v) || _.isNaN(v));
 _.isNotUndefined = (v) => !_.isUndefined(v);
 _.isDate = (date) => Object.prototype.toString.call(date) === '[object Date]' && !_.isNaN(date.getTime());
@@ -32,6 +31,4 @@ _.and = (fn1, fn2, ...others) => others.length ? _.and(_.and(fn1, fn2), ...other
 _.isPromisify = _.and(_.isObject, ({then}) => _.isPlainFunction(then));
 
 _.template = (str, obj) => (new Function(...(Object.keys(obj)), 'return `' + str + '`')(...(Object.values(obj))));
-
-_.types = {Object, Array, Number, String, Boolean, Date, RegExp, Function, Error};
-if (_.hasBuffer) _.types.Buffer = Buffer;
+_.toNull = (v) => _.isUndefined(v) ? null : v;

@@ -1,6 +1,6 @@
 const Sugar = require('sugar-core');
 const {parallel, reflectAll} = require('async');
-const {isArray, isUndefined} = require('./utils');
+const {isArray, isUndefined, toNull} = require('./utils');
 const {ValidationError} = require('./types');
 const {multipleError} = ValidationError;
 
@@ -27,24 +27,15 @@ module.exports = {
     maxItems: (data, maxItems) => (data.length <= maxItems),
     unique  : (data, unique) => !unique || data.every((v, i, d) => d.indexOf(v) === i),
     items   : function (data, items, cb) {
-      let isQueue = isArray(items);
       let {every, map} = Sugar.Array;
+      let checks = isArray(items) ?
+        items.map((schema, i) => partial(schema.isValid, toNull(data[i])).bind(schema)) :
+        data.map((d) => partial(items.isValid, toNull(d)).bind(items));
 
-      if (!cb)
-        return isQueue ?
-          every(items, (schema, index) => schema.isValid(data[index])) :
-          every(data, (item) => items.isValid(item));
+      if (!cb) return every(checks, fn => fn());
 
-      let _cb = (err, results) =>
-        cb(multipleError(map(results, 'error')), map(results, 'value'));
-
-      if (isQueue) {
-        let queues = items.map((schema, i) => partial(schema.isValid, isUndefined(data[i]) ? null : data[i]));
-        return parallel(reflectAll(queues), _cb)
-      } else {
-        let checks = data.map((d) => partial(items.isValid, isUndefined(d) ? null : d));
-        return parallel(reflectAll(checks), _cb)
-      }
+      return parallel(reflectAll(checks), (err, results) =>
+        cb(multipleError(map(results, 'error')), map(results, 'value')))
     }
   },
   Object: {
@@ -52,11 +43,10 @@ module.exports = {
       let {every, map, has, filter} = Sugar.Object;
       let checkUndefined = has(this, 'required');
       let required = this.required || [];
+      let checks = map(props, (schema, prop) => partial(schema.isValid, toNull(data[prop])).bind(schema));
 
-      if (!cb)
-        return every(props, (Schema, key) => Schema.isValid(data[key]));
+      if (!cb) return every(checks, fn => fn());
 
-      let checks = map(props, (schema, prop) => partial(schema.isValid, isUndefined(data[prop]) ? null : data[prop]));
       return parallel(reflectAll(checks), (err, results) => {
         let errors = map(results, 'error');
 

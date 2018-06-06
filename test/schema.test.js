@@ -1,7 +1,7 @@
 const chai = require('chai');
 const Sugar = require('sugar');
 const {Any} = require('../src/types');
-const Schema = require('../src/Schema');
+const Schema = require('../src/index');
 
 const should = chai.should();
 const types = [String, Number, Boolean, Date, Object, Array, Function, Any];
