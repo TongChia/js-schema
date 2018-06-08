@@ -5,7 +5,7 @@ _.hasSymbol = typeof Symbol !== 'undefined';
 
 _.simpleType = (v) => Object.prototype.toString.call(v).match(/^\[object (\w+)]$/)[1];
 
-(['Object', 'Array', 'String', 'Boolean', 'Symbol', 'RegExp', 'Error',
+(['Object', 'Array', 'String', 'Number', 'Date', 'Boolean', 'Symbol', 'RegExp', 'Error',
   'Null', 'Undefined', 'Promise', 'Map', 'Set', 'AsyncFunction', 'GeneratorFunction'
 ]).forEach(type => {
   _['is' + type] = (v) => Object.prototype.toString.call(v) === `[object ${type}]`;
@@ -20,8 +20,6 @@ _.isNaN = Number.isNaN;
 _.isInteger = Number.isInteger;
 _.isNil = (v) => (_.isUndefined(v) || _.isNull(v) || _.isNaN(v));
 _.isNotUndefined = (v) => !_.isUndefined(v);
-_.isDate = (date) => Object.prototype.toString.call(date) === '[object Date]' && !_.isNaN(date.getTime());
-_.isNumber = (num) => Object.prototype.toString.call(num) === '[object Number]' && !_.isNaN(num);
 _.isInvalidString = (str) => !(_.isString(str) && str.trim());
 
 _.not = (v) => !v;

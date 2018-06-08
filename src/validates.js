@@ -1,17 +1,21 @@
 const Sugar = require('sugar-core');
 const {parallel, reflectAll} = require('async');
-const {isArray, isUndefined, toNull} = require('./utils');
+const {formats} = require('./libs');
+const {isArray, toNull} = require('./utils');
 const {ValidationError} = require('./types');
 const {multipleError} = ValidationError;
 
 const {partial} = Sugar.Function;
+const {merge, forEach} = Sugar.Object;
 
-module.exports = {
+const verifications = {
   String: {
     enum     : (data, _enum) => _enum.includes(data),
-    match    : (data, match) => match.test(data),
+    match    : (data, regexp) => RegExp(regexp).test(data),
+    get pattern() {return this.match},
     minLength: (data, minLength) => (data.length >= minLength),
-    maxLength: (data, maxLength) => (data.length <= maxLength)
+    maxLength: (data, maxLength) => (data.length <= maxLength),
+    format   : (data, name) => (formats.has(name) && formats.get(name)(data)),
   },
   Number: {
     min    : (data, min) => (data >= min),
@@ -41,7 +45,7 @@ module.exports = {
   Object: {
     properties: function (data, props, cb) {
       let {every, map, has, filter} = Sugar.Object;
-      let checkUndefined = has(this, 'required');
+      let checkRequired = has(this, 'required');
       let required = this.required || [];
       let checks = map(props, (schema, prop) => partial(schema.isValid, toNull(data[prop])).bind(schema));
 
@@ -50,7 +54,7 @@ module.exports = {
       return parallel(reflectAll(checks), (err, results) => {
         let errors = map(results, 'error');
 
-        if (checkUndefined)
+        if (checkRequired)
           errors = filter(errors, (e, k) => !!e && (e.type !== 'Undefined' || required.includes(k)));
 
         return cb(multipleError(errors), map(results, 'value'));
@@ -58,4 +62,34 @@ module.exports = {
     },
     required: () => true
   }
+};
+
+let formatValidators = {
+  'hostname': (data) => (/^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/).test(data)
+};
+
+try {
+  let validator = require('validator');
+  let isIP = validator['isIP'];
+
+  merge(formatValidators, {
+    'ipv4' : partial(isIP, undefined, 4),
+    'ipv6' : partial(isIP, undefined, 6)
+  });
+
+  forEach({
+    'data-time': 'isRFC3339',
+    'numeric'  : 'isNumeric',
+    'email'    : 'isEmail',
+    'url'      : 'isURL',
+  }, (v, k) => merge(formatValidators, {[k]: validator[v]}));
+
+} catch (e) {
+  if (e.message === "Cannot find module 'validator'")
+    console.warn('no module `validator` found, formats method can not use.')
+}
+
+module.exports = {
+  verifications,
+  formatValidators
 };

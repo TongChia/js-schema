@@ -44,6 +44,8 @@ describe('SCHEMA TEST', () => {
     StrSchema2.isValid('foo').should.be.true;
     StrSchema2.isValid('ok').should.be.false;
     StrSchema2.isValid('bar').should.be.false;
+    Sugar.String.pattern('^h\\w+o$').isValid('hello').should.be.true;
+    Sugar.String.pattern(/^h\w+o$/).isValid('hello').should.be.true;
 
     StrSchema1.isValid(undefined, (err) => {
       err.message.should.equal('variable is not defined.');
@@ -100,6 +102,11 @@ describe('SCHEMA TEST', () => {
       });
     });
 
+  });
+
+  it('FORMAT', () => {
+    Sugar.String.format('email').isValid('tongchia@live.com').should.be.true;
+    Sugar.String.format('ipv4').isValid('192.168.1.1').should.be.true;
   });
 
 });

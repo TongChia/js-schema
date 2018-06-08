@@ -3,6 +3,7 @@ const _ = require('./utils');
 const {ValidationError} = require('./types');
 
 const validates = new Map;
+const formats = new Map;
 const {isUndefined, isAsyncFunction, isNil} = _;
 const {has, add} = Sugar.Object;
 const {concatError} = ValidationError;
@@ -41,32 +42,31 @@ const createSchemaWrap = (_super, keyword, parameter) => {
     })
   };
 
-  let handler = {
+  return new Proxy(fn, {
     get: function(target, prop) {
       return (prop in target) ? target[prop] : _super[prop];
     }
-  };
-  return new Proxy(fn, handler);
+  });
 };
 
 const ensureSugarNamespace = (namespace) => {
-  let ns = has(Sugar, namespace) ?
-    Sugar[namespace] :
-    Sugar.createNamespace(namespace);
+  const ns = has(Sugar, namespace) ? Sugar[namespace] : Sugar.createNamespace(namespace);
+  const isType = 'is' + namespace;
+  const checkMethod = Sugar.Object[isType] || _[isType];
 
-  if (!has(ns, 'isValid'))
+  if (!has(ns, 'isValid') || ns.isValid.length === 1)
     ns.defineStatic({isValid: function (v, cb) {
-        let undef = isNil(v);
-        let valid = !undef && _['is' + namespace](v);
+      let unNil = !isNil(v);
+      let valid = unNil && checkMethod(v);
 
-        if (!cb) return valid;
+      if (!cb) return valid;
 
-        let err =
-          undef ? ValidationError('${title} is not defined.', {error: 'Undefined'}) :
-            valid ? null : ValidationError('${title} type should be ' + namespace + '.', {error: 'TypeError'});
+      let err = unNil ? valid ? null :
+        ValidationError('${title} type should be ' + namespace + '.', {error: 'TypeError'}) :
+        ValidationError('${title} is not defined.', {error: 'Undefined'});
 
-        return cb(err, v);
-      }});
+      return cb(err, v);
+    }});
 
   if (!has(ns, 'toJSON'))
     ns.defineStatic({toJSON: () => ({type: (namespace.toLowerCase())})});
@@ -90,8 +90,15 @@ const addValidateKeyword = (namespace, keyword, validate) => {
   })
 };
 
+const addFormatValidator = (format, validator) => {
+  formats.set(format, validator);
+};
+
 module.exports = {
+  validates,
+  formats,
   createSchemaWrap,
+  addFormatValidator,
   ensureSugarNamespace,
   addValidateKeyword
 };
