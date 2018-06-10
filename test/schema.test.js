@@ -107,6 +107,10 @@ describe('SCHEMA TEST', () => {
   it('FORMAT', () => {
     Sugar.String.format('email').isValid('tongchia@live.com').should.be.true;
     Sugar.String.format('ipv4').isValid('192.168.1.1').should.be.true;
+    Sugar.String.format('ipv6').isValid('::1').should.be.true;
+    Sugar.String.format('url').isValid('http://github.com/api').should.be.true;
+    Sugar.String.format('date-time').isValid('2018-10-18T20:08:00Z').should.be.true;
+    Sugar.String.format('country-code').isValid('CN').should.be.true;
   });
 
 });

@@ -1,7 +1,9 @@
 const _ = module.exports = {};
+const {NODE_ENV} = 'undefined' !== typeof process ? process.env : window.env;
 
 _.hasBuffer = typeof Buffer !== 'undefined';
 _.hasSymbol = typeof Symbol !== 'undefined';
+_.isProduction = NODE_ENV === 'production';
 
 _.simpleType = (v) => Object.prototype.toString.call(v).match(/^\[object (\w+)]$/)[1];
 

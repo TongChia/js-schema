@@ -1,7 +1,7 @@
 const Sugar = require('sugar-core');
 const {parallel, reflectAll} = require('async');
 const {formats} = require('./libs');
-const {isArray, toNull} = require('./utils');
+const {isArray, toNull, isProduction} = require('./utils');
 const {ValidationError} = require('./types');
 const {multipleError} = ValidationError;
 
@@ -21,6 +21,7 @@ const verifications = {
     min    : (data, min) => (data >= min),
     max    : (data, max) => (data <= max),
     integer: (data, integer) => !integer || Number.isInteger(data),
+    multipleOf: (data, multiple) => (data % multiple) === 0,
   },
   Date: {
     after : (data, after) => (new Date(data) > new Date(after)),
@@ -60,12 +61,19 @@ const verifications = {
         return cb(multipleError(errors), map(results, 'value'));
       })
     },
+    additionalProperties: function (data, additional) {
+      let {none, keys} = Sugar.Object;
+      let props = keys(this);
+
+      return additional ||
+        none(data, (v, k) => isNotUndefined(v) && !props.includes(k));
+    },
     required: () => true
   }
 };
 
 let formatValidators = {
-  'hostname': (data) => (/^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/).test(data)
+  'hostname': /^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$/
 };
 
 try {
@@ -78,15 +86,19 @@ try {
   });
 
   forEach({
-    'data-time': 'isRFC3339',
-    'numeric'  : 'isNumeric',
-    'email'    : 'isEmail',
-    'url'      : 'isURL',
+    'date-time'   : 'isRFC3339',
+    'numeric'     : 'isNumeric',
+    'email'       : 'isEmail',
+    'url'         : 'isURL',
+    'base64'      : 'isBase64',
+    'uuid'        : 'isUUID',
+    'object-id'   : 'isMongoId',
+    'country-code': 'isISO31661Alpha2',
   }, (v, k) => merge(formatValidators, {[k]: validator[v]}));
 
 } catch (e) {
-  if (e.message === "Cannot find module 'validator'")
-    console.warn('no module `validator` found, formats method can not use.')
+  if (e.message === "Cannot find module 'validator'" && !isProduction)
+    console.warn('Cannot find module `validator`, some format validator can not be used.')
 }
 
 module.exports = {

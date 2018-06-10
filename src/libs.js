@@ -4,7 +4,7 @@ const {ValidationError} = require('./types');
 
 const validates = new Map;
 const formats = new Map;
-const {isUndefined, isAsyncFunction, isNil} = _;
+const {isUndefined, isAsyncFunction, isNil, isRegExp, isFunction, isString} = _;
 const {has, add} = Sugar.Object;
 const {concatError} = ValidationError;
 
@@ -91,7 +91,12 @@ const addValidateKeyword = (namespace, keyword, validate) => {
 };
 
 const addFormatValidator = (format, validator) => {
-  formats.set(format, validator);
+  if (isRegExp(validator))
+    formats.set(format, (data) => validator.test(data));
+  if (isString(validator))
+    formats.set(format, (data) => RegExp(validator).test(data));
+  if (isFunction(validator))
+    formats.set(format, validator);
 };
 
 module.exports = {
