@@ -6,6 +6,18 @@ const {ensureSugarNamespace, addValidateKeyword, addFormatValidator} = require('
 const {forEach} = Sugar.Object;
 const {partial} = Sugar.Function;
 
+let types = [
+  'Object',
+  'Array',
+  'Number',
+  'String',
+  'Boolean',
+  'Date',
+  'RegExp',
+  'Function',
+  'Error'
+].concat(hasBuffer ? 'Buffer' : []);
+
 const Schema = module.exports =
 function parseJsonSchema (json) {
   //TODO: parse json-schema
@@ -15,9 +27,7 @@ Schema.getNamespace = ensureSugarNamespace;
 Schema.addKeyword   = addValidateKeyword;
 Schema.addFormat    = addFormatValidator;
 
-['Object', 'Array', 'Number', 'String', 'Boolean', 'Date', 'RegExp', 'Function', 'Error']
-  .concat(hasBuffer ? 'Buffer' : [])
-  .forEach((type) => Schema.getNamespace(type).defineStatic('defineValidate', partial(Schema.addKeyword, type)));
+types.forEach((type) => Schema.getNamespace(type).defineStatic('defineValidate', partial(Schema.addKeyword, type)));
 
 forEach(formatValidators, (validator, format) => Schema.addFormat(format, validator));
 

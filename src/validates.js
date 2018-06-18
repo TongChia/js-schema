@@ -52,6 +52,7 @@ const verifications = {
 
       if (!cb) return every(checks, fn => fn());
 
+      //TODO: use run-parallel
       return parallel(reflectAll(checks), (err, results) => {
         let errors = map(results, 'error');
 
