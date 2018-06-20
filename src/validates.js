@@ -1,7 +1,7 @@
-const Sugar = require('sugar-core');
+const Sugar = require('sugar');
 const {parallel, reflectAll} = require('async');
 const {formats} = require('./libs');
-const {isArray, toNull, isProduction} = require('./utils');
+const {isArray, isObject, isBuffer, toNull, isProduction} = require('./utils');
 const {ValidationError} = require('./types');
 const {multipleError} = ValidationError;
 
@@ -10,6 +10,8 @@ const {merge, forEach} = Sugar.Object;
 
 const verifications = {
   String: {
+    alias    : ['str'],
+    isValid  : Sugar.Object.isString,
     enum     : (data, _enum) => _enum.includes(data),
     match    : (data, regexp) => RegExp(regexp).test(data),
     get pattern() {return this.match},
@@ -18,16 +20,22 @@ const verifications = {
     format   : (data, name) => (formats.has(name) && formats.get(name)(data)),
   },
   Number: {
+    alias  : ['num'],
+    isValid: Sugar.Object.isNumber,
     min    : (data, min) => (data >= min),
     max    : (data, max) => (data <= max),
     integer: (data, integer) => !integer || Number.isInteger(data),
     multipleOf: (data, multiple) => (data % multiple) === 0,
   },
   Date: {
+    alias  : ['datatime'],
+    isValid: Sugar.Object.isDate,
     after : (data, after) => (new Date(data) > new Date(after)),
     before: (data, before) => (new Date(data) < new Date(before))
   },
   Array: {
+    alias  : ['arr'],
+    isValid: isArray,
     minItems: (data, minItems) => (data.length >= minItems),
     maxItems: (data, maxItems) => (data.length <= maxItems),
     unique  : (data, unique) => !unique || data.every((v, i, d) => d.indexOf(v) === i),
@@ -44,6 +52,8 @@ const verifications = {
     }
   },
   Object: {
+    alias  : ['obj'],
+    isValid: isObject,
     properties: function (data, props, cb) {
       let {every, map, has, filter} = Sugar.Object;
       let checkRequired = has(this, 'required');
@@ -70,6 +80,25 @@ const verifications = {
         none(data, (v, k) => isNotUndefined(v) && !props.includes(k));
     },
     required: () => true
+  },
+  Boolean: {
+    alias  : ['bool'],
+    isValid: Sugar.Object.isBoolean
+  },
+  Function: {
+    alias  : ['func'],
+    isValid: Sugar.Object.isFunction
+  },
+  RegExp: {
+    isValid: Sugar.Object.isRegExp
+  },
+  Error: {
+    alias  : ['err'],
+    isValid: Sugar.Object.isError
+  },
+  Buffer: {
+    alias  : ['buf'],
+    isValid: isBuffer
   }
 };
 

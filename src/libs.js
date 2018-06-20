@@ -1,14 +1,16 @@
-const Sugar = require('sugar-core');
+const Sugar = require('sugar');
 const _ = require('./utils');
 const {ValidationError} = require('./types');
 
 const validates = new Map;
 const formats = new Map;
 const {isUndefined, isAsyncFunction, isNil, isRegExp, isFunction, isString} = _;
-const {has, add} = Sugar.Object;
+const {has, set} = Sugar.Object;
 const {concatError} = ValidationError;
+const defineStatic = (target, method, fn) =>
+  has(target, 'defineStatic') ? target.defineStatic(method, fn) : set(target, method, fn);
 
-const createSchemaWrap = (_super, keyword, parameter) => {
+const createSchemaChain = (_super, keyword, parameter) => {
 
   let fn = function SchemaChain (obj) {this.raw = obj};
   let _v = validates.get(keyword);
@@ -17,7 +19,7 @@ const createSchemaWrap = (_super, keyword, parameter) => {
 
   if (isUndefined(parameter)) parameter = true;
 
-  fn.toJSON = () => add(_super.toJSON(), {[keyword]: parameter});
+  fn.toJSON = () => set(_super.toJSON(), keyword, parameter);
 
   fn.isValid = function (data, cb) {
 
@@ -49,44 +51,52 @@ const createSchemaWrap = (_super, keyword, parameter) => {
   });
 };
 
-const ensureSugarNamespace = (namespace) => {
-  const ns = has(Sugar, namespace) ? Sugar[namespace] : Sugar.createNamespace(namespace);
-  const isType = 'is' + namespace;
-  const checkMethod = Sugar.Object[isType] || _[isType];
+const createNamespace = function (namespace, isValid, alias) {
+  if (has(this, namespace)) return this[namespace];
 
-  if (!has(ns, 'isValid') || ns.isValid.length === 1)
-    ns.defineStatic({isValid: function (v, cb) {
-      let unNil = !isNil(v);
-      let valid = unNil && checkMethod(v);
+  const ns = function (obj) {this.raw = obj};
+  const methods = new Set;
 
-      if (!cb) return valid;
+  ns.name = namespace + 'Schema';
 
-      let err = unNil ? valid ? null :
-        ValidationError('${title} type should be ' + namespace + '.', {error: 'TypeError'}) :
-        ValidationError('${title} is not defined.', {error: 'Undefined'});
+  ns.defineStatic = (method, fn) => {
+    methods.add(method);
+    ns[method] = fn;
+    return ns;
+  };
 
-      return cb(err, v);
-    }});
+  ns.extend = (target) => methods.forEach(method => defineStatic(target, method, ns[method]));
 
-  if (!has(ns, 'toJSON'))
-    ns.defineStatic({toJSON: () => ({type: (namespace.toLowerCase())})});
+  ns.defineStatic('isValid', function (v, cb) {
+    let unNil = !isNil(v);
+    let valid = unNil && isValid(v);
 
-  return ns;
+    if (!cb) return valid;
+
+    let err = unNil ? valid ? null :
+      ValidationError('${title} type should be ' + namespace + '.', {error: 'TypeError'}) :
+      ValidationError('${title} is not defined.', {error: 'Undefined'});
+
+    return cb(err, v);
+  });
+
+  ns.defineStatic('toJSON', () => ({type: (namespace.toLowerCase())}));
+
+  ns.defineStatic('defineValidate', addValidateKeyword);
+
+  return this[namespace] = ns;
 };
 
-const addValidateKeyword = (namespace, keyword, validate) => {
+const addValidateKeyword = function (keyword, validate) {
   let {
     validator = validate,
     message = 'Value is not validated',
     error = ValidationError
   } = validate;
-  let ns = ensureSugarNamespace(namespace);
 
   validates.set(keyword, {validator, message, error});
-  ns.defineStatic({
-    [keyword]: function (arg) {
-      return createSchemaWrap(this, keyword, arg)
-    }
+  this.defineStatic([keyword], function (arg) {
+    return createSchemaChain(this, keyword, arg)
   })
 };
 
@@ -99,11 +109,17 @@ const addFormatValidator = (format, validator) => {
     formats.set(format, validator);
 };
 
+const extend = function (target = this) {
+  forEach(this, (ns, space) => {
+    if (has(ns, 'extend') && has(target, space))
+      ns.extend(target[space])
+  })
+};
+
 module.exports = {
   validates,
   formats,
-  createSchemaWrap,
   addFormatValidator,
-  ensureSugarNamespace,
-  addValidateKeyword
+  createNamespace,
+  extend
 };

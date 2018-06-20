@@ -1,5 +1,5 @@
 const {isError, template} = require('./utils');
-const Sugar = require('sugar-core');
+const Sugar = require('sugar');
 const util = require('util');
 
 function Any (value) {

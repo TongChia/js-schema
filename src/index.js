@@ -1,36 +1,24 @@
-const Sugar = require('sugar-core');
-const {hasBuffer} = require('./utils');
+const Sugar = require('sugar');
 const {verifications, formatValidators} = require('./validates');
-const {ensureSugarNamespace, addValidateKeyword, addFormatValidator} = require('./libs');
+const libs = require('./libs');
+const _ = require('./utils');
 
 const {forEach} = Sugar.Object;
-const {partial} = Sugar.Function;
-
-let types = [
-  'Object',
-  'Array',
-  'Number',
-  'String',
-  'Boolean',
-  'Date',
-  'RegExp',
-  'Function',
-  'Error'
-].concat(hasBuffer ? 'Buffer' : []);
 
 const Schema = module.exports =
 function parseJsonSchema (json) {
   //TODO: parse json-schema
 };
 
-Schema.getNamespace = ensureSugarNamespace;
-Schema.addKeyword   = addValidateKeyword;
-Schema.addFormat    = addFormatValidator;
+forEach(libs, (v, k) => Schema[k] = v);
 
-types.forEach((type) => Schema.getNamespace(type).defineStatic('defineValidate', partial(Schema.addKeyword, type)));
+forEach(formatValidators, (validator, format) => Schema.addFormatValidator(format, validator));
 
-forEach(formatValidators, (validator, format) => Schema.addFormat(format, validator));
+forEach(verifications, (verification, type) => {
+  let {alias, isValid, ...validates} = verification;
+  let ns = Schema.createNamespace(type, isValid || _['is' + type]);
+  forEach([type.toLowerCase()].concat(alias), alia => Object.defineProperty(Schema, alia, {get: () => ns}));
+  forEach(validates, (validate, keyword) => ns.defineValidate(keyword, validate))
+});
 
-forEach(verifications, (verification, type) =>
-  forEach(verification, (validate, keyword) =>
-    Sugar[type]['defineValidate'](keyword, validate)));
+Schema.date.toJSON = () => ({type: 'date-time'});

@@ -11,7 +11,7 @@ if ('undefined' !== typeof Buffer)
 describe('SCHEMA TEST', () => {
 
   it('NUMBER', (done) => {
-    const NumSchema = Sugar.Number.min(5).max(20);
+    const NumSchema = Schema.Number.min(5).max(20);
     const IntegerSchema = NumSchema.integer();
 
     NumSchema.isValid('8').should.be.false;
@@ -21,6 +21,8 @@ describe('SCHEMA TEST', () => {
 
     IntegerSchema.isValid(0.1).should.be.false;
     IntegerSchema.isValid(8).should.be.true;
+
+    Schema.num.isValid(NaN).should.be.false;
 
     NumSchema.isValid(1, (err, result) => {
       should.exist(err);
@@ -36,16 +38,17 @@ describe('SCHEMA TEST', () => {
   });
 
   it('STRING', (done) => {
-    const StrSchema1 = Sugar.String.maxLength(10).minLength(5);
-    const StrSchema2 = Sugar.String.match(/o/).enum(['foo', 'hello']);
+    const StrSchema1 = Schema.String.maxLength(10).minLength(5);
+    const StrSchema2 = Schema.String.match(/o/).enum(['foo', 'hello']);
 
     StrSchema1.isValid('hello').should.be.true;
     StrSchema1.isValid('hello word!').should.be.false;
     StrSchema2.isValid('foo').should.be.true;
     StrSchema2.isValid('ok').should.be.false;
     StrSchema2.isValid('bar').should.be.false;
-    Sugar.String.pattern('^h\\w+o$').isValid('hello').should.be.true;
-    Sugar.String.pattern(/^h\w+o$/).isValid('hello').should.be.true;
+
+    Schema.str.pattern('^h\\w+o$').isValid('hello').should.be.true;
+    Schema.str.pattern(/^h\w+o$/).isValid('hello').should.be.true;
 
     StrSchema1.isValid(undefined, (err) => {
       err.message.should.equal('variable is not defined.');
@@ -54,17 +57,17 @@ describe('SCHEMA TEST', () => {
   });
 
   it('DATE', () => {
-    const DateSchema = Sugar.Date.after('2018-01-03').before('2018-03-03');
+    const DateSchema = Schema.Date.after('2018-01-03').before('2018-03-03');
 
     DateSchema.isValid(new Date('2018-02-26')).should.be.true;
   });
 
   it('ARRAY', (done) => {
-    const ArrSchema = Sugar.Array.maxItems(4).minItems(2).unique().items(Sugar.String);
-    const ArrSchemaQueue = Sugar.Array.items([
-      Sugar.String,
-      Sugar.Number,
-      Sugar.Function,
+    const ArrSchema = Schema.Array.maxItems(4).minItems(2).unique().items(Schema.String);
+    const ArrSchemaQueue = Schema.Array.items([
+      Schema.String,
+      Schema.Number,
+      Schema.Function,
     ]).unique();
 
     ArrSchema.isValid(['foo', 'bar']).should.be.true;
@@ -81,10 +84,10 @@ describe('SCHEMA TEST', () => {
   });
 
   it('OBJECT', (done) => {
-    const ObjSchema = Sugar.Object.properties({
-      name: Sugar.String,
-      age : Sugar.Number.min(18).max(60),
-      married: Sugar.Boolean
+    const ObjSchema = Schema.Object.properties({
+      name: Schema.String,
+      age : Schema.Number.min(18).max(60),
+      married: Schema.Boolean
     }).required(['name']);
 
     ObjSchema.isValid({name: 'Tom', age : 30, married: true,}).should.be.true;
@@ -105,12 +108,12 @@ describe('SCHEMA TEST', () => {
   });
 
   it('FORMAT', () => {
-    Sugar.String.format('email').isValid('tongchia@live.com').should.be.true;
-    Sugar.String.format('ipv4').isValid('192.168.1.1').should.be.true;
-    Sugar.String.format('ipv6').isValid('::1').should.be.true;
-    Sugar.String.format('url').isValid('http://github.com/api').should.be.true;
-    Sugar.String.format('date-time').isValid('2018-10-18T20:08:00Z').should.be.true;
-    Sugar.String.format('country-code').isValid('CN').should.be.true;
+    Schema.string.format('email').isValid('tongchia@live.com').should.be.true;
+    Schema.string.format('ipv4').isValid('192.168.1.1').should.be.true;
+    Schema.string.format('ipv6').isValid('::1').should.be.true;
+    Schema.string.format('url').isValid('http://github.com/api').should.be.true;
+    Schema.string.format('date-time').isValid('2018-10-18T20:08:00Z').should.be.true;
+    Schema.string.format('country-code').isValid('CN').should.be.true;
   });
 
 });
