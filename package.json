@@ -1,6 +1,6 @@
 {
   "name": "@tongchia/jsschema-sugar",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "description": "js schema",
   "main": "index.js",
   "scripts": {

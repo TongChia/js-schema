@@ -2,7 +2,6 @@ const Sugar = require('sugar');
 const _ = require('./utils');
 const {ValidationError} = require('./types');
 
-const validates = new Map;
 const formats = new Map;
 const {isUndefined, isAsyncFunction, isNil, isRegExp, isFunction, isString} = _;
 const {has, set} = Sugar.Object;
@@ -10,27 +9,26 @@ const {concatError} = ValidationError;
 const defineStatic = (target, method, fn) =>
   has(target, 'defineStatic') ? target.defineStatic(method, fn) : set(target, method, fn);
 
-const createSchemaChain = (_super, keyword, parameter) => {
+const createSchemaChain = (_super, keyword, parameter, validate) => {
 
-  let fn = function SchemaChain (obj) {this.raw = obj};
-  let _v = validates.get(keyword);
-  let {validator, message, error} = _v;
-  let isAwait = isAsyncFunction(validator);
+  // let fn = function SchemaChain (obj) {this.raw = obj};
+  let fn = (...args) => fn.isValid(...args);
 
   if (isUndefined(parameter)) parameter = true;
 
   fn.toJSON = () => set(_super.toJSON(), keyword, parameter);
 
   fn.isValid = function (data, cb) {
-
-    const json = this.toJSON();
+    let {validator = validate, message = '${title} is not validated', error = ValidationError} = validate;
+    let isAwait = isAsyncFunction(validator);
+    let json = this.toJSON();
 
     // TODO: force sync;
     if (!cb) // check data & skip async validator;
-      return _super.isValid.call(this, data) && (isAwait || _v.async || validator.call(json, data, parameter));
+      return _super.isValid.call(this, data) && (isAwait || validate.async || validator.call(json, data, parameter));
 
     return _super.isValid.call(this, data, (errors, result) => {
-      if (isUndefined(result))
+      if (isNil(result))
         return cb(errors, result);
 
       if (validator.length >= 3)
@@ -51,13 +49,13 @@ const createSchemaChain = (_super, keyword, parameter) => {
   });
 };
 
-const createNamespace = function (namespace, isValid, alias) {
+const createNamespace = function (namespace, isValid) {
   if (has(this, namespace)) return this[namespace];
 
   const ns = function (obj) {this.raw = obj};
   const methods = new Set;
 
-  ns.name = namespace + 'Schema';
+  // ns.name = namespace + 'Schema';
 
   ns.defineStatic = (method, fn) => {
     methods.add(method);
@@ -88,15 +86,8 @@ const createNamespace = function (namespace, isValid, alias) {
 };
 
 const addValidateKeyword = function (keyword, validate) {
-  let {
-    validator = validate,
-    message = 'Value is not validated',
-    error = ValidationError
-  } = validate;
-
-  validates.set(keyword, {validator, message, error});
-  this.defineStatic([keyword], function (arg) {
-    return createSchemaChain(this, keyword, arg)
+  return this.defineStatic([keyword], function (arg) {
+    return createSchemaChain(this, keyword, arg, validate)
   })
 };
 
@@ -117,7 +108,6 @@ const extend = function (target = this) {
 };
 
 module.exports = {
-  validates,
   formats,
   addFormatValidator,
   createNamespace,

@@ -4,6 +4,7 @@ const libs = require('./libs');
 const _ = require('./utils');
 
 const {forEach} = Sugar.Object;
+const {append} = Sugar.Array;
 
 const Schema = module.exports =
 function parseJsonSchema (json) {
@@ -17,7 +18,7 @@ forEach(formatValidators, (validator, format) => Schema.addFormatValidator(forma
 forEach(verifications, (verification, type) => {
   let {alias, isValid, ...validates} = verification;
   let ns = Schema.createNamespace(type, isValid || _['is' + type]);
-  forEach([type.toLowerCase()].concat(alias), alia => Object.defineProperty(Schema, alia, {get: () => ns}));
+  forEach(append([type.toLowerCase(), type.toUpperCase()], alias), alia => Object.defineProperty(Schema, alia, {get: () => ns}));
   forEach(validates, (validate, keyword) => ns.defineValidate(keyword, validate))
 });
 
