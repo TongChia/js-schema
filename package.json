@@ -1,5 +1,5 @@
 {
-  "name": "@tongchia/jsschema-sugar",
+  "name": "@tongchia/jsschema",
   "version": "0.1.5",
   "description": "js schema",
   "main": "index.js",
@@ -15,8 +15,6 @@
     "schema",
     "js-schema",
     "json-schema",
-    "sugar",
-    "sugarjs",
     "type",
     "validate",
     "validation"
@@ -28,21 +26,19 @@
   },
   "homepage": "https://github.com/TongChia/js-schema#readme",
   "devDependencies": {
-    "@babel/cli": "^7.0.0-beta.51",
-    "@babel/core": "^7.0.0-beta.51",
-    "@babel/polyfill": "^7.0.0-beta.51",
-    "@babel/preset-env": "^7.0.0-beta.51",
-    "@babel/preset-es2015": "^7.0.0-beta.51",
-    "@babel/preset-stage-0": "^7.0.0-beta.51",
-    "@babel/register": "^7.0.0-beta.51",
-    "babel-eslint": "^8.2.3",
+    "@babel/cli": "^7.0.0-beta.56",
+    "@babel/core": "^7.0.0-beta.56",
+    "@babel/polyfill": "^7.0.0-beta.56",
+    "@babel/preset-env": "^7.0.0-beta.56",
+    "@babel/register": "^7.0.0-beta.56",
+    "babel-eslint": "^8.2.6",
     "chai": "^4.1.2",
     "eslint": "^4.19.1",
     "mocha": "^5.2.0"
   },
   "dependencies": {
     "async": "^2.6.1",
-    "sugar": "^2.0.4"
+    "lodash": "^4.17.10"
   },
   "optionalDependencies": {
     "validator": "^10.3.0"
