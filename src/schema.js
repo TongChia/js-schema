@@ -1,42 +1,35 @@
-import _ from 'lodash';
+const _ = require('lodash');
 
-export const _setter = () => {};
-
-export const TYPES = new Map(['string', _.isString]);
-
-function addKeyword () {
-
+function Schema (val, cb) {
+  if (!new.target)
+    return this.isValid(val);
+  this._ = val;
 }
 
-export function Schema (keyword, func, parameter, _super) {
+const props = {};
 
-  const fn = function (val, cb) {
-    if (!new.target) return fn.isValid(val, cb);
-    fn.toObject(this);
-  };
+props.isValid = function (val, cb) {};
 
-  fn.defines = Object.assign({}, _super, {[keyword]: parameter});
+props.addAlias = function (...alias) {};
 
-  fn.toObject = (o) => {};
-  fn.toJSON = (format) => format ? () => {} : fn.defines;
+props.toJSON = function (version) {return this._};
 
-  fn.isValid = (val, cb) =>
-    _super.isValid(val, (err) => {
-      if (err) {cb(err)}
+props.toModule = function (val) {};
 
+Schema.addModuleMethod = function () {};
 
-    });
+Schema.string = new Schema({type: 'string'});
 
-  return fn;
-}
+Schema.addKeyword = function (keyword, checkFunc) {
 
-const createChecker = (keyword, checkFunc, parameter, _super) => {
+  props[keyword] = function (param) {
+    return new Schema(_.merge(this._, {[keyword]: param}))
+  }
 
 };
 
-const isNumber = createChecker('Number type', _.isNumber);
-const isNumMax10 = _.partial(createChecker, 'max', _.partial(_.max, _, 10));
-
+// const isNumber = createChecker('Number type', _.isNumber);
+// const isNumMax10 = _.partial(createChecker, 'max', _.partial(_.max, _, 10));
 
 //////////////////////////
 // HOW TO USE
@@ -56,3 +49,6 @@ const check = object.isValid({
   bar: 2
 });
 
+Object.assign(Schema.properties, props);
+
+module.exports = Schema;
