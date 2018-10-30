@@ -2,7 +2,7 @@
   "name": "@tongchia/jsschema",
   "version": "0.1.5",
   "description": "js schema",
-  "main": "index.js",
+  "main": "./src/index.js",
   "scripts": {
     "test": "mocha --require @babel/register",
     "babel": "babel ./src/ -d ./lib/"
@@ -34,13 +34,12 @@
     "babel-eslint": "^8.2.6",
     "chai": "^4.1.2",
     "eslint": "^4.19.1",
+    "faker": "^4.1.0",
     "mocha": "^5.2.0"
   },
   "dependencies": {
     "async": "^2.6.1",
-    "lodash": "^4.17.10"
-  },
-  "optionalDependencies": {
-    "validator": "^10.3.0"
+    "lodash": "^4.17.10",
+    "validator": "^10.8.0"
   }
 }

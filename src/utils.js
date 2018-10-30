@@ -1,34 +1,18 @@
-const _ = module.exports = {};
-const {NODE_ENV} = 'undefined' !== typeof process ? process.env : window.env;
+const _ = require('lodash');
 
-_.hasBuffer = typeof Buffer !== 'undefined';
-_.hasSymbol = typeof Symbol !== 'undefined';
-_.isProduction = NODE_ENV === 'production';
+// get keys intersection.
+const _keys = (obj1, obj2) => _.intersection(_.keys(obj1), _.keys(obj2));
 
-_.simpleType = (v) => Object.prototype.toString.call(v).match(/^\[object (\w+)]$/)[1];
+const _uniq = (arr) => _.every(arr, (item, i) => _.eq(_.indexOf(arr, item), i));
 
-(['Object', 'Array', 'String', 'Number', 'Date', 'Boolean', 'Symbol', 'RegExp', 'Error',
-  'Null', 'Undefined', 'Promise', 'Map', 'Set', 'AsyncFunction', 'GeneratorFunction'
-]).forEach(type => {
-  _['is' + type] = (v) => Object.prototype.toString.call(v) === `[object ${type}]`;
-});
+// undefined = true.
+const _true = (fn) => (v, bool) => {
+  if (bool || _.isUndefined(bool)) return fn(v);
+  return true;
+};
 
-if (_.hasBuffer) _.isBuffer = Buffer.isBuffer;
-_.isPlainFunction = (fn) => Object.prototype.toString.call(fn) === '[object Function]';
-_.isFunction = (fn) => (typeof fn === 'function');
-_.isConstructor = (fn) => (_.isPlainFunction(fn) && fn.prototype && fn.name);
-_.isArray = Array.isArray;
-_.isNaN = Number.isNaN;
-_.isInteger = Number.isInteger;
-_.isNil = (v) => (_.isUndefined(v) || _.isNull(v) || _.isNaN(v));
-_.isNotUndefined = (v) => !_.isUndefined(v);
-_.isInvalidString = (str) => !(_.isString(str) && str.trim());
-
-_.not = (v) => !v;
-_.or = (fn1, fn2, ...others) => others.length ? _.or(_.or(fn1, fn2), ...others) : (value) => (fn1(value) || fn2(value));
-_.and = (fn1, fn2, ...others) => others.length ? _.and(_.and(fn1, fn2), ...others) : (value) => (fn1(value) && fn2(value));
-
-_.isPromisify = _.and(_.isObject, ({then}) => _.isPlainFunction(then));
-
-_.template = (str, obj) => (new Function(...(Object.keys(obj)), 'return `' + str + '`')(...(Object.values(obj))));
-_.toNull = (v) => _.isUndefined(v) ? null : v;
+module.exports = {
+  _keys,
+  _true,
+  _uniq
+};

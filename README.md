@@ -1,102 +1,115 @@
-js-schema (with Sugar.js)
-=========================
-JS Schema validation, compatible with `json-schema`
+js-schema
+=========
+JS Schema validation, compatible with `json-schema`, `Mongoose Schema`, ``
 
 QUICK START
 -----------
+
+### Install
 install with npm
 ```bash
-npm install -S '@tongchia/jsschema-sugar'
+npm i -S '@tongchia/jsschema'
 ```
+
+### Usage
 ```js
-const Sugar = require('sugar');
-const schema = Sugar.String.maxLength(200).minLength(5).match(/hello/);
-// -> Schema {isValid: function (value) { /* check value */ }, ...}
-schema.isValid('hello world');
-// -> true
-schema.isValid('hello');
-// -> false
-schema.isValid('foo', (err, data) => {
+const {string} = require('jsschema');
+
+const schema = string.maxLength(200).minLength(5).match(/hello/);
+
+schema.isValid('hello world', (err) => {
   assert.ifError(err);
-  assert.equal('foo', data);
-})
+});
+
+schema.isValid('hello', (err) => {
+  assert.ifError(err);
+  console.log(err.message);
+  //--> Invalid value for string.minLength(5)
+});
 ```
 ```js
-const schema = Sugar.Object.properties({
-  name: Sugar.String.maxLength(20).required(),
-  age : Sugar.Number.max(150).min(0),
-  birthday: Sugar.Date
+const schema = object.properties({
+  name: string.maxLength(20).required(),
+  age : number.max(150).min(0),
+  birthday: date
 });
 schema.isValid({
   name: 'Tom',
   age: 12,
   birthday: now Date()
+}, (err) => {
+  assert.ifError(err);
 });
-// => true
 ```
-toJsonSchema
-```js
-Sugar.Number.max(10).min(1).toJSON();
-// {
-//   type: 'number',
-//   max: 10,
-//   min: 1
-// }
-Sugar.String.toJSON();
-// {
-//   type: 'string'
-// }
-```
-
 
 VALIDATE
 ---
 
-### BUILT-IN
-- String
-  - enum
-  - match
-  - minLength
-  - maxLength
-- Number
-  - min
-  - max
-  - integer
-- Date
-  - after
-  - before
-- Array
-  - minItems
-  - maxItems
-  - unique
-  - items
-- Object
-  - properties
-  - required
+- Types
+  - string
+    - [x] enum
+    - [x] pattern
+    - [x] minLength
+    - [x] maxLength
+    - [x] format (chriso/validator.js)
+  - number (integer)
+    - [x] min
+    - [x] max
+    - [x] integer
+    - [x] multipleOf
+  - date
+    - [x] after
+    - [x] before
+  - array
+    - [x] minItems
+    - [x] maxItems
+    - [x] unique
+    - [x] items
+  - object
+    - [x] properties
+    - [x] required
+    - [ ] additionalProperties
+    - [ ] dependencies ✨
+    - [ ] propertyNames
+    - [ ] size
+    - [ ] patternProperties
+  - [x] null (nil)
+  - [x] boolean
+  - [x] buffer
+- Metadata
+  - [ ] title
+  - [ ] description
+  - [ ] default
+  - [ ] examples
+- SubSchemas
+  - [ ] allOf
+  - [ ] anyOf
+  - [ ] oneOf
+  - [ ] not
+- [ ] Constant values
+- [ ] Enumerated values
 
 ### CUSTOM
-#### Sync validate
 ```javascript
-SugarNamespace.validates.set(
+const {string} = require('jsschema');
+
+string.addValidate(
   'keyword', // the keyword
   {
     validator: (value, parameter) => check(value, parameter), // return true/false;
-    message: '${keyword} error, ${value} too big',
-    error: RangeError // defalut ValidationError;
+    message: 'Invalid value ( <%= value %> ) for <%= keyword %>(<%= params %>).',
   }
 )
-```
 
-#### Async validate
-```javascript
-SugarNamespace.validates.set(
+string.addValidate(
   'keyword',
   {
+    isAsync: true,
     validator: (value, parameter, callback) => {
-      if (value)
-        return callback(null, value);
-      else
-        return callback(new Error('...'))
+      // check value
+      if ('ok')
+        return callback(null, value)
+      return callback(new ValidationError('...'))
     }
   }
 )
@@ -106,7 +119,7 @@ SugarNamespace.validates.set(
 - [x] custom validate;
 - [x] async validator (with callback);
 - [ ] async validator (es2015);
-- [ ] format validate;
+- [x] format validate;
 - [ ] toModel
   - [ ] MobX;
   - [ ] MongoDB;
