@@ -18,8 +18,10 @@ _.each(
     maxItems: (arr, l) => arr.length <= l,
     contains: {
       isAsync: true,
-      validator: (arr, schema, callback) =>
-        $.each(arr, (item, cb) => schema.isValid(item, cb), callback)
+      validator: (arr, schema, callback) => $.someSeries(arr,
+        (item, cb) => schema.isValid(item, (invalid) => cb(null, !invalid)),
+        (err, valid) => callback(valid ? null : VError(`Invalid item for array.contains`), arr)
+      )
     },
     items: {
       isAsync: true,
