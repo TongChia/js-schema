@@ -2,7 +2,7 @@ const _ = require('lodash');
 const createSchema = require('./schemaFactory');
 const {_true} = require('./utils');
 
-const number = createSchema('number', _.isNumber);
+const number = createSchema('number', (num) => (_.isNumber(num) && !_.isNaN(num)));
 
 _.each(
   {

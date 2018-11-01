@@ -44,7 +44,11 @@ describe('ARRAY SCHEMA TEST', () => {
     array.contains(nil).isValid(strs, (err) => {
       err.should.be.instanceOf(Error);
 
-      array.contains(nil).isValid(list, done)
+      array.contains(nil).isValid(list, (err) => {
+        should.not.exist(err);
+
+        return done();
+      })
     });
   });
 

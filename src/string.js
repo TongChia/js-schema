@@ -6,14 +6,14 @@ const string = createSchema('string', _.isString);
 
 const formats = {
   'date-time': vjs.isRFC3339,
-  'hostname': (str) => /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/gm.test(str),
+  hostname: (str) => RegExp('^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$').test(str),
 };
 
 const kebab = _.flow([_.kebabCase, _.partial(_.replace, _, /-(\d)/g, '$1')]);
 
 _.each(vjs, (v, k) => {
   if (_.startsWith(k, 'is') && v.call)
-    formats[kebab(k.slice(2))] = v
+    formats[kebab(k.slice(2))] = v;
 });
 
 _.each(

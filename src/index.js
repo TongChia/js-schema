@@ -1,3 +1,5 @@
+const _ = require('lodash');
+
 module.exports = {
   ...require('./null'),
   ...require('./date'),
@@ -6,5 +8,6 @@ module.exports = {
   ...require('./string'),
   ...require('./array'),
   ...require('./object'),
-  ValidationError: require('./error'),
+  ...require('./error'),
+  ...(_.isUndefined(typeof Buffer) ? {} : require('./buffer')),
 };

@@ -5,9 +5,8 @@
         "node": "8.0"
       },
       "debug": true,
-      "useBuiltIns": "entry"
-    }],
-    ["@babel/preset-stage-0", {"decoratorsLegacy": true}]
+      "useBuiltIns": "usage"
+    }]
   ]
 }
 

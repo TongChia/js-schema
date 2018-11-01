@@ -49,7 +49,7 @@ describe('OBJECT SCHEMA TEST', () => {
       val.should.deep.equal(person);
 
       schema.isValid({age: 'foobar'}, (err) => {
-        err.should.be.instanceOf(TypeError);
+        err.should.be.instanceOf(Error);
 
         return done()
       });

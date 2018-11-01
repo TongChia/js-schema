@@ -1,7 +1,7 @@
 const _ = require('lodash');
 
 function ValidationError (msg, ctx) {
-  if (!new.target) return new ValidationError(message, ctx);
+  if (!new.target) return new ValidationError(msg, ctx);
 
   Error.call(this);
   if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);

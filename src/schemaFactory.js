@@ -12,11 +12,16 @@ module.exports = function (typeName, checker) {
 
   Schema.validates = {};
 
-  _.merge(Schema.prototype, {
+  Object.defineProperties(Schema.prototype, {
 
-    toJSON: function (version) {return this._},
+    'class': {get: () => Schema},
 
-    isValid: function (val, callback) {
+    toJSON: {value: function (version) {
+      if (version) return {};
+      return this._;
+    }},
+
+    isValid: {value: function (val, callback) {
       if (checker && !checker(val))
         return callback(new TypeError(`Invalid value for ${typeName}.`), val);
 
@@ -32,18 +37,18 @@ module.exports = function (typeName, checker) {
         if (validator(val, ...params)) return cb();
         return cb(new VError(msg || message, {params, keyword: k, typeName}));
 
-      }, (err) => callback(err, val))
-    },
+      }, (err) => callback(err, val));
+    }},
 
-    addKeyword: function (keyword) {
+    addKeyword: {value: function (keyword) {
       Schema.prototype[keyword] = function (...params) {
         return new Schema({...this._, [keyword]: params});
       };
 
       return this;
-    },
+    }, enumerable: false},
 
-    addValidate: function (keyword, validate, msg) {
+    addValidate: {value: function (keyword, validate, msg) {
       const {
         isAsync,
         validator = validate,
@@ -52,8 +57,8 @@ module.exports = function (typeName, checker) {
 
       _.merge(Schema.validates, {[keyword]: {validator, message, isAsync}});
 
-      return this.addKeyword(keyword)
-    }
+      return this.addKeyword(keyword);
+    }, enumerable: false}
   });
 
   return new Schema({type: typeName});

@@ -1,6 +1,6 @@
 js-schema
 =========
-JS Schema validation, compatible with `json-schema`, `Mongoose Schema`, ``
+JS Schema validation, compatible with `json-schema`, `Mongoose Schema`
 
 QUICK START
 -----------
@@ -13,30 +13,22 @@ npm i -S '@tongchia/jsschema'
 
 ### Usage
 ```js
-const {string} = require('jsschema');
+const {object, string, number, date, array, boolean} = require('jsschema');
 
-const schema = string.maxLength(200).minLength(5).match(/hello/);
+const person = object
+  .properties({
+    name    : string.maxLength(200).minLength(5),
+    age     : number.min(0, true).max(150),
+    birthday: date,
+    married : boolean,
+    books   : array.items(string)
+  })
+  .required(['name', 'age', 'birthday']);
 
-schema.isValid('hello world', (err) => {
-  assert.ifError(err);
-});
-
-schema.isValid('hello', (err) => {
-  assert.ifError(err);
-  console.log(err.message);
-  //--> Invalid value for string.minLength(5)
-});
-```
-```js
-const schema = object.properties({
-  name: string.maxLength(20).required(),
-  age : number.max(150).min(0),
-  birthday: date
-});
-schema.isValid({
-  name: 'Tom',
-  age: 12,
-  birthday: now Date()
+person.isValid({
+  name    : 'TongChia',
+  age     : 30,
+  birthday: new Date('10/18/1987')
 }, (err) => {
   assert.ifError(err);
 });
@@ -88,8 +80,10 @@ VALIDATE
   - [ ] not
 - [ ] Constant values
 - [ ] Enumerated values
+- [ ] to json schema
+- [ ] from json schema
 
-### CUSTOM
+### Custom
 ```javascript
 const {string} = require('jsschema');
 
@@ -120,6 +114,7 @@ string.addValidate(
 - [x] async validator (with callback);
 - [ ] async validator (es2015);
 - [x] format validate;
+- [ ] browser test;
 - [ ] toModel
   - [ ] MobX;
   - [ ] MongoDB;

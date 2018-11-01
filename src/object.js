@@ -2,6 +2,7 @@ const _ = require('lodash');
 const $ = require('async');
 const {_keys} = require('./utils');
 const createSchema = require('./schemaFactory');
+const VError = require('./error');
 
 const _err = (path, cb) => (err) => {
   if (!err) return cb();
