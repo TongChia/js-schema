@@ -47,11 +47,14 @@ VALIDATE
   - number (integer)
     - [x] min
     - [x] max
+    - [x] range
     - [x] integer
     - [x] multipleOf
   - date
     - [x] after
     - [x] before
+  - [x] boolean
+  - [x] nil
   - array
     - [x] minItems
     - [x] maxItems
@@ -61,7 +64,8 @@ VALIDATE
     - [x] properties
     - [x] required
     - [ ] additionalProperties
-    - [ ] dependencies ✨
+    - [x] dependencies
+      - [ ] schema dependencies
     - [ ] propertyNames
     - [ ] size
     - [ ] patternProperties

@@ -9,6 +9,7 @@ const object = createSchema('object', _.isObject);
 _.each(
   {
     required: (obj, props) => _.every(props, p => _.has(obj, p) && obj[p] !== undefined),
+    dependencies: (obj, param) => _.every(param, (deps, prop) => (!_.has(obj, prop) || _.every(deps, dep => _.has(obj, dep)))),
     properties: {
       isAsync: true,
       validator: (obj, props, callback) =>
