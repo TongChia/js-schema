@@ -19,4 +19,11 @@ describe('STRING SCHEMA TEST', () => {
       });
     });
   });
+
+  it('string length', (done) => {
+    const schema = string.minLength(1).maxLength(10);
+
+    done();
+  })
+
 });

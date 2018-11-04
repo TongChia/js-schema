@@ -1,5 +1,6 @@
 const chai = require('chai');
 const should = chai.should();
+const _ = require('lodash');
 const {series} = require('async');
 const {number, integer} = require('../src/number');
 
@@ -57,8 +58,8 @@ describe('NUMERIC SCHEMA TEST', () => {
     let minNumSchema = number.min(int);
     let rangeSchema  = number.range(float, int, true);
 
-    rangeSchema._.max.should.deep.equal([int, true]);
-    rangeSchema._.min.should.deep.equal([float, true]);
+    _.get(rangeSchema, '_.maximum.0').should.equal(int);
+    _.get(rangeSchema, '_.minimum.0').should.equal(float);
 
     series([
 

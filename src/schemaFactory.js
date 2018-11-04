@@ -3,64 +3,61 @@ const $ = require('async');
 const {_keys} = require('./utils');
 const VError = require('./error');
 
-module.exports = function (typeName, checker) {
+module.exports = function (type, checker) {
 
-  function Schema (val) {
-    if (!new.target) return new Schema(val);
-    this._ = val;
+  function Schema (definitions, annotations) {
+    if (!new.target) return new Schema(definitions, annotations);
+    this._ = definitions;
+    this.$ = annotations;
   }
 
   Schema.validates = {};
 
-  Object.defineProperties(Schema.prototype, {
+  _.merge(Schema.prototype, {
 
-    'class': {get: () => Schema},
+    'class': Schema,
 
-    toJSON: {value: function (version) {
-      if (version) return {};
-      return this._;
-    }},
+    toJSON: function () {
+      return _.mapValues(this._, arr => arr[0]);
+    },
 
-    isValid: {value: function (val, callback) {
-      if (checker && !checker(val))
-        return callback(new TypeError(`Invalid value for ${typeName}.`), val);
+    isTyped: checker || _.constant(true),
 
-      $.each(_keys(Schema.validates, this._), (k, cb) => {
-        const params = this._[k],
-          {isAsync, validator, message} = Schema.validates[k],
-          msg =
-            (params.length - validator.length) > (isAsync ? 1 : 2) &&
-            _.isString(_.last(params)) &&
-            params.pop();
+    isValid: function (val, callback) {
+      if (!this.isTyped(val)) return callback(new TypeError(`Invalid value for ${type}.`), val);
+
+      $.each(_keys(Schema.validates, this._), (keyword, cb) => {
+        const params = this._[keyword],
+          {isAsync, validator, message} = Schema.validates[keyword],
+          msg = _.get(params, [params.length - 1, 'name']) === 'errMsgWrapper' && params.pop();
 
         if (isAsync) return validator(val, ...params, cb);
         if (validator(val, ...params)) return cb();
-        return cb(new VError(msg || message, {params, keyword: k, typeName}));
+        return cb(new VError(msg || message, {params, keyword, type}));
 
       }, (err) => callback(err, val));
-    }},
-
-    addKeyword: {value: function (keyword) {
-      Schema.prototype[keyword] = function (...params) {
-        return new Schema({...this._, [keyword]: params});
-      };
-
-      return this;
-    }, enumerable: false},
-
-    addValidate: {value: function (keyword, validate, msg) {
-      const {
-        isAsync,
-        validator = validate,
-        message = msg || `Invalid value for ${typeName}.${keyword}(<%=params%>)`
-      } = validate;
-
-      _.merge(Schema.validates, {[keyword]: {validator, message, isAsync}});
-
-      return this.addKeyword(keyword);
-    }, enumerable: false}
+    }
   });
 
-  return new Schema({type: typeName});
+  return _.merge(new Schema({type}), {
+    original: true,
+
+    protoMethod: function (prop, method) {
+      Schema.prototype[prop] = method;
+      return this
+    },
+
+    addKeyword: function (keyword) {
+      return this.protoMethod(keyword, function (...params) {
+        return new Schema({...this._, [keyword]: params});
+      });
+    },
+
+    addValidate: function (keyword, validate, msg) {
+      const {isAsync, message = msg, validator = validate} = validate;
+      _.merge(Schema.validates, {[keyword]: _.omitBy({validator, message, isAsync}, _.isUndefined)});
+      return this.addKeyword(keyword);
+    }
+  });
 
 };

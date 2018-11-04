@@ -2,7 +2,7 @@ const _ = require('lodash');
 const $ = require('async');
 const createSchema = require('./schemaFactory');
 const VError = require('./error');
-const {_true, _uniq} = require('./utils');
+const {_uniq} = require('./utils');
 
 const _err = (path, cb) => (err) => {
   if (!err) return cb();
@@ -13,7 +13,7 @@ const array = createSchema('array', _.isArray);
 
 _.each(
   {
-    unique:   _true(_uniq),
+    unique:   (arr, y = true) => !y || _uniq(arr),
     minItems: (arr, l) => arr.length >= l,
     maxItems: (arr, l) => arr.length <= l,
     contains: {

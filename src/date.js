@@ -4,7 +4,7 @@ const createSchema = require('./schemaFactory');
 const date = createSchema('date', _.isDate);
 
 // to date;
-const _d = (d) => _.isUndefined(d) ? Date.now() : new Date(d);
+const _d = (d) => (d === 'now' || _.isUndefined(d)) ? Date.now() : new Date(d);
 
 _.each(
   {
@@ -13,5 +13,9 @@ _.each(
   },
   (validate, keyword) => date.addValidate(keyword, validate)
 );
+
+date.protoMethod('toJSON', function () {
+  return {type: 'string', format: 'date-time', _: this._, ...this.$}
+});
 
 module.exports = {date};

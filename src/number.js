@@ -1,24 +1,29 @@
 const _ = require('lodash');
 const createSchema = require('./schemaFactory');
-const {_true} = require('./utils');
 
 const number = createSchema('number', (num) => (_.isNumber(num) && !_.isNaN(num)));
 
-_.each(
-  {
-    integer: _true(_.isInteger),
-    max:     (v, n, e) => e ? v <= n : v < n,
-    min:     (v, n, e) => e ? v >= n : v > n,
-    multipleOf: (v, m) => (v % m) === 0,
-  },
-  (validate, keyword) => number.addValidate(keyword, validate)
-);
+_.each({
+  maximum: _.lte,
+  minimum: _.gte,
+  exclusiveMaximum: _.lt,
+  exclusiveMinimum: _.gt,
+  multipleOf: (v, m) => (v % m) === 0,
+}, (validate, keyword) => number.addValidate(keyword, validate));
 
-number.constructor.prototype.range = function (min, max, ...rest) {
-  return this.max(max, ...rest).min(min, ...rest);
-};
+_.each({
+  max: function (n, eq, ...rest) {
+    return eq ? this.maximum(n, ...rest) : this.exclusiveMaximum(n, ...rest);
+  },
+  min: function (n, eq, ...rest) {
+    return eq ? this.minimum(n, ...rest) : this.exclusiveMinimum(n, ...rest);
+  },
+  range: function (min, max, ...rest) {
+    return this.max(max, ...rest).min(min, ...rest);
+  }
+}, (validate, keyword) => number.protoMethod(keyword, validate));
 
 module.exports = {
   number,
-  integer: number.integer()
+  integer: _.merge(new number.class({type: 'integer'}), {isTyped: _.isInteger})
 };
