@@ -28,7 +28,7 @@ describe('OBJECT SCHEMA TEST', () => {
       object.isValid('foobar', (err) => {
         err.should.be.instanceOf(TypeError);
 
-        return done()
+        return done();
       });
     });
   });
@@ -41,7 +41,7 @@ describe('OBJECT SCHEMA TEST', () => {
       schema.required(['age']).isValid({age: undefined}, (err) => {
         err.should.be.instanceOf(Error);
 
-        return done()
+        return done();
       });
     });
   });
@@ -54,7 +54,29 @@ describe('OBJECT SCHEMA TEST', () => {
       schema.isValid({age: 'foobar'}, (err) => {
         err.should.be.instanceOf(Error);
 
-        return done()
+        return done();
+      });
+    });
+  });
+
+  it('Object size validate', (done) => {
+    object.minProperties(1).isValid({}, (err) => {
+      err.should.be.instanceOf(Error);
+
+      object.maxProperties(1).isValid({
+        foo: 'bar', bar: 'foo'
+      }, (err) => {
+        err.should.be.instanceOf(Error);
+
+        object.size(1, 2).isValid({foo: 1}, (err) => {
+          should.not.exist(err);
+
+          object.size(1, 2).isValid({}, (err) => {
+            err.should.be.instanceOf(Error);
+
+            return done();
+          });
+        });
       });
     });
   });

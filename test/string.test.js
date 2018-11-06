@@ -15,15 +15,38 @@ describe('STRING SCHEMA TEST', () => {
       string.isValid(null, (err) => {
         err.should.be.instanceOf(TypeError);
 
-        return done()
+        return done();
       });
     });
   });
 
-  it('string length', (done) => {
-    const schema = string.minLength(1).maxLength(10);
+  it('String length', (done) => {
+    const schema = string.minLength(1).maxLength(5);
 
-    done();
-  })
+    schema.isValid('hello', (err) => {
+      should.not.exist(err);
+
+      schema.isValid('hello world', (err) => {
+        err.should.instanceOf(Error);
+
+        return done();
+      });
+    });
+  });
+
+  describe('STRING FORMAT TEST', () => {
+
+    it('Email', async () => {
+      const email = faker.internet.email();
+      (await string.format('email').isValid(email)).should.equal(email);
+
+      try {
+        await string.format('email').isValid('foobar');
+      } catch (err) {
+        err.should.instanceOf(Error);
+      }
+    });
+
+  });
 
 });

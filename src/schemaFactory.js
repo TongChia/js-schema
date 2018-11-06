@@ -18,12 +18,15 @@ module.exports = function (type, checker) {
     'class': Schema,
 
     toJSON: function () {
-      return _.mapValues(this._, arr => arr[0]);
+      return _.mapValues(this._, _.first);
     },
 
     isTyped: checker || _.constant(true),
 
     isValid: function (val, callback) {
+      if (!callback) return new Promise((resolve, reject) =>
+        this.isValid(val, (err) => err ? reject(err) : resolve(val)));
+
       if (!this.isTyped(val)) return callback(new TypeError(`Invalid value for ${type}.`), val);
 
       $.each(_keys(Schema.validates, this._), (keyword, cb) => {
@@ -44,12 +47,12 @@ module.exports = function (type, checker) {
 
     protoMethod: function (prop, method) {
       Schema.prototype[prop] = method;
-      return this
+      return this;
     },
 
     addKeyword: function (keyword) {
       return this.protoMethod(keyword, function (...params) {
-        return new Schema({...this._, [keyword]: params});
+        return new Schema({...this._, [keyword]: params}, this.$);
       });
     },
 

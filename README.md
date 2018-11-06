@@ -1,6 +1,6 @@
 js-schema
 =========
-JS Schema validation, compatible with `json-schema`, `Mongoose Schema`
+JS Schema validation, compatible with `json-schema`.
 
 QUICK START
 -----------
@@ -43,11 +43,14 @@ VALIDATE
     - [x] pattern
     - [x] minLength
     - [x] maxLength
-    - [x] format (chriso/validator.js)
+    - [x] format
+      - [x] * from `chriso/validator.js`
+      - [x] data-time (full-date, full-time)
   - number (integer)
-    - [x] min
-    - [x] max
-    - [x] range
+    - [x] minimum, maximum
+    - [x] exclusiveMinimum, exclusiveMaximum
+    - [x] min, max (alias to `minimum, maximum, exclusiveMinimum, exclusiveMaximum`)
+    - [x] range (alias to `min, max`)
     - [x] integer
     - [x] multipleOf
   - date
@@ -60,6 +63,9 @@ VALIDATE
     - [x] maxItems
     - [x] unique
     - [x] items
+    - [x] contains
+    - [ ] entries
+    - [ ] Overload function ✨
   - object
     - [x] properties
     - [x] required
@@ -67,7 +73,7 @@ VALIDATE
     - [x] dependencies
       - [ ] schema dependencies
     - [ ] propertyNames
-    - [ ] size
+    - [x] size
     - [ ] patternProperties
   - [x] null (nil)
   - [x] boolean
@@ -84,8 +90,9 @@ VALIDATE
   - [ ] not
 - [ ] Constant values
 - [ ] Enumerated values
-- [ ] to json schema
-- [ ] from json schema
+- [ ] json-schema
+  - [ ] to json-schema
+  - [ ] from json schema
 
 ### Custom
 ```javascript

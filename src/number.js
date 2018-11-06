@@ -19,9 +19,14 @@ _.each({
     return eq ? this.minimum(n, ...rest) : this.exclusiveMinimum(n, ...rest);
   },
   range: function (min, max, ...rest) {
-    return this.max(max, ...rest).min(min, ...rest);
+    let result;
+    if (_.isNumber(min))
+      result = this.min(min, ...rest);
+    if (max > min)
+      result = result.max(max, ...rest);
+    return result;
   }
-}, (validate, keyword) => number.protoMethod(keyword, validate));
+}, (method, keyword) => number.protoMethod(keyword, method));
 
 module.exports = {
   number,

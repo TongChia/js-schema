@@ -10,6 +10,7 @@ const _err = (path, cb) => (err) => {
 }; // TODO: error message with more information;
 
 const array = createSchema('array', _.isArray);
+const isAsync = true;
 
 _.each(
   {
@@ -17,14 +18,14 @@ _.each(
     minItems: (arr, l) => arr.length >= l,
     maxItems: (arr, l) => arr.length <= l,
     contains: {
-      isAsync: true,
+      isAsync,
       validator: (arr, schema, callback) => $.someSeries(arr,
         (item, cb) => schema.isValid(item, (invalid) => cb(null, !invalid)),
-        (err, valid) => callback(valid ? null : VError(`Invalid item for array.contains`), arr)
+        (err, valid) => callback(valid ? null : VError('Invalid items for array.contains'), arr)
       )
     },
     items: {
-      isAsync: true,
+      isAsync,
       validator: (arr, items, callback) => _.isArray(items) ?
         $.eachOf(items, (s, i, cb) => s.isValid(arr[i], _err(i, cb)), callback) :
         $.eachOf(arr, (v, i, cb) => items.isValid(v, _err(i, cb)), callback)
