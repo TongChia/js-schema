@@ -44,8 +44,16 @@ VALIDATE
     - [x] minLength
     - [x] maxLength
     - [x] format
-      - [x] * from `chriso/validator.js`
+      - [x] \* from `chriso/validator.js`
       - [x] data-time (full-date, full-time)
+      - [x] ipv4, ipv6
+      - [x] email
+      - [x] hostname
+      - [ ] uri, iri
+      - [ ] uri-template
+      - [ ] json
+      - [ ] regex
+    - [ ] String-Encoding Non-JSON Data
   - number (integer)
     - [x] minimum, maximum
     - [x] exclusiveMinimum, exclusiveMaximum
@@ -56,8 +64,6 @@ VALIDATE
   - date
     - [x] after
     - [x] before
-  - [x] boolean
-  - [x] nil
   - array
     - [x] minItems
     - [x] maxItems

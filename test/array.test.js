@@ -21,9 +21,9 @@ describe('ARRAY SCHEMA TEST', () => {
 
       let str = faker.name.findName();
       array.isValid(str, (err) => {
-        err.should.be.instanceOf(TypeError);
+        err.should.be.instanceOf(Error);
 
-        return done()
+        return done();
       });
     });
   });
@@ -36,8 +36,8 @@ describe('ARRAY SCHEMA TEST', () => {
         should.not.exist(err);
 
         return done();
-      })
-    })
+      });
+    });
   });
 
   it('Contains validate', (done) => {
@@ -48,40 +48,40 @@ describe('ARRAY SCHEMA TEST', () => {
         should.not.exist(err);
 
         return done();
-      })
+      });
     });
   });
 
   it('Items validate', (done) => {
-    let arrSchema = array.items(number.max(10, true));
-    let queueSchema = array.items([number, string, number, nil]);
+    let lists = array.items(number.max(10, true));
+    let tuple = array.items([number, string, number, nil]);
 
     series([
-      (cb) => arrSchema.isValid(nums, (err) => {
+      (cb) => lists.isValid(nums, (err) => {
         should.not.exist(err);
-        return cb()
+        return cb();
       }),
 
-      (cb) => arrSchema.isValid(nums.concat(11), (err) => {
+      (cb) => lists.isValid(nums.concat(11), (err) => {
         err.should.be.instanceOf(Error);
-        return cb()
+        return cb();
       }),
 
-      (cb) => queueSchema.isValid(list, (err) => {
+      (cb) => tuple.isValid(list, (err) => {
         should.not.exist(err);
-        return cb()
+        return cb();
       }),
 
-      (cb) => queueSchema.maxItems(4).isValid(list, (err) => {
+      (cb) => tuple.maxItems(4).isValid(list, (err) => {
         err.should.be.instanceOf(Error);
-        return cb()
+        return cb();
       }),
 
-      (cb) => queueSchema.minItems(5).isValid(list, (err) => {
+      (cb) => tuple.minItems(5).isValid(list, (err) => {
         should.not.exist(err);
-        return cb()
+        return cb();
       })
     ], done);
 
-  })
+  });
 });

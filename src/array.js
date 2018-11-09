@@ -1,12 +1,12 @@
 const _ = require('lodash');
 const $ = require('async');
 const createSchema = require('./schemaFactory');
-const VError = require('./error');
+const {ValidationError} = require('./error');
 const {_uniq} = require('./utils');
 
 const _err = (path, cb) => (err) => {
   if (!err) return cb();
-  return cb(new VError(`Invalid item in array[${path}] for array.items ( ${err.message} ).`));
+  return cb(new ValidationError(`Invalid item in array[${path}] for array.items ( ${err.message} ).`));
 }; // TODO: error message with more information;
 
 const array = createSchema('array', _.isArray);
@@ -21,14 +21,25 @@ _.each(
       isAsync,
       validator: (arr, schema, callback) => $.someSeries(arr,
         (item, cb) => schema.isValid(item, (invalid) => cb(null, !invalid)),
-        (err, valid) => callback(valid ? null : VError('Invalid items for array.contains'), arr)
+        (err, valid) => callback(valid ? null : ValidationError('Invalid items for array.contains'), arr)
       )
     },
     items: {
       isAsync,
       validator: (arr, items, callback) => _.isArray(items) ?
+        // Tuple validation
         $.eachOf(items, (s, i, cb) => s.isValid(arr[i], _err(i, cb)), callback) :
+        // List validation
         $.eachOf(arr, (v, i, cb) => items.isValid(v, _err(i, cb)), callback)
+    },
+    additionalItems: {
+      isAsync,
+      validator: (arr, schema, callback) => {
+        const items = _.get(this, '_.items.0');
+        if (!_.isArray(items) || arr.length <= items.length) return callback();
+        if (_.isFunction(schema.isValid))
+          return $.eachOf(arr, (v, i, cb) => items.isValid(v, _err(i, cb)), callback);
+      }
     }
   },
   (validate, keyword) => array.addValidate(keyword, validate)
@@ -36,5 +47,5 @@ _.each(
 
 module.exports = {
   array,
-  unique: array.unique()
+  unique: array.unique(true)
 };

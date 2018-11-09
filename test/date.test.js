@@ -14,9 +14,9 @@ describe('DATE SCHEMA TEST', () => {
       val.should.deep.equal(now);
 
       date.isValid('foobar', (err) => {
-        err.should.be.instanceOf(TypeError);
+        err.should.be.instanceOf(Error);
 
-        return done()
+        return done();
       });
     });
   });
@@ -32,8 +32,8 @@ describe('DATE SCHEMA TEST', () => {
         err.should.be.instanceOf(Error);
 
         return done();
-      })
-    })
-  })
+      });
+    });
+  });
 
 });

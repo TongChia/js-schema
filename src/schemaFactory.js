@@ -1,11 +1,11 @@
 const _ = require('lodash');
 const $ = require('async');
 const {_keys} = require('./utils');
-const VError = require('./error');
+const {ValidationError} = require('./error');
 
 module.exports = function (type, checker) {
 
-  function Schema (definitions, annotations) {
+  function Schema (definitions = {}, annotations = {}) {
     if (!new.target) return new Schema(definitions, annotations);
     this._ = definitions;
     this.$ = annotations;
@@ -14,8 +14,7 @@ module.exports = function (type, checker) {
   Schema.validates = {};
 
   _.merge(Schema.prototype, {
-
-    'class': Schema,
+    class: Schema,
 
     toJSON: function () {
       return _.mapValues(this._, _.first);
@@ -23,26 +22,34 @@ module.exports = function (type, checker) {
 
     isTyped: checker || _.constant(true),
 
-    isValid: function (val, callback) {
-      if (!callback) return new Promise((resolve, reject) =>
-        this.isValid(val, (err) => err ? reject(err) : resolve(val)));
+    isValid: function (value, callback) {
+      if (!callback && !_.eq(typeof Promise, 'undefined'))
+        return new Promise((resolve, reject) =>
+          this.isValid(value, (err) => err ? reject(err) : resolve(value))
+        );
 
-      if (!this.isTyped(val)) return callback(new TypeError(`Invalid value for ${type}.`), val);
+      if (!this.isTyped(value))
+        return callback(new ValidationError(
+          '{value} should instance of {type}.',
+          {type, value, error: 'TypeError'}
+        ), value);
 
       $.each(_keys(Schema.validates, this._), (keyword, cb) => {
         const params = this._[keyword],
-          {isAsync, validator, message} = Schema.validates[keyword],
-          msg = _.get(params, [params.length - 1, 'name']) === 'errMsgWrapper' && params.pop();
+          {isAsync, validator, message} = Schema.validates[keyword];
 
-        if (isAsync) return validator(val, ...params, cb);
-        if (validator(val, ...params)) return cb();
-        return cb(new VError(msg || message, {params, keyword, type}));
+        if (isAsync) return validator(value, ...params, cb);
+        if (validator(value, ...params)) return cb();
 
-      }, (err) => callback(err, val));
+        return cb(new ValidationError(
+          _.get(this, ['$', 'messages', keyword]) || message,
+          {value, params, keyword, type}
+        ));
+      }, (err) => callback(err, value));
     }
   });
 
-  return _.merge(new Schema({type}), {
+  return _.assign(new Schema({type}), {
     original: true,
 
     protoMethod: function (prop, method) {
@@ -50,9 +57,11 @@ module.exports = function (type, checker) {
       return this;
     },
 
-    addKeyword: function (keyword) {
+    addKeyword: function (keyword, ...defaultParams) {
       return this.protoMethod(keyword, function (...params) {
-        return new Schema({...this._, [keyword]: params}, this.$);
+        if (_.get(_.last(params), 'isTemplate'))
+          _.set(this, ['$', 'messages', keyword], params.pop());
+        return new Schema({...this._, [keyword]: _.merge([], defaultParams, params)}, this.$);
       });
     },
 

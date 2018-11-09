@@ -30,5 +30,5 @@ _.each({
 
 module.exports = {
   number,
-  integer: _.merge(new number.class({type: 'integer'}), {isTyped: _.isInteger})
+  integer: _.assign(new number.class({type: 'integer'}), {isTyped: _.isInteger})
 };

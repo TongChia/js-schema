@@ -15,11 +15,11 @@ describe('NUMERIC SCHEMA TEST', () => {
       val.should.equal(float);
 
       number.isValid(int.toString(), (err, val) => {
-        err.should.be.instanceOf(TypeError);
+        err.should.be.instanceOf(Error);
         val.should.equal(int.toString());
 
         return done();
-      })
+      });
     });
   });
 
@@ -32,25 +32,25 @@ describe('NUMERIC SCHEMA TEST', () => {
         val.should.equal(val);
 
         return done();
-      })
-    })
+      });
+    });
   });
 
   it('Multiple of validate', (done) => {
     series([
       (cb) => integer.multipleOf(3).isValid(5, (err) => {
         err.should.be.instanceOf(Error);
-        return cb()
+        return cb();
       }),
       (cb) => integer.multipleOf(3).isValid(6, (err) => {
         should.not.exist(err);
-        return cb()
+        return cb();
       }),
       (cb) => number.multipleOf(2.5).isValid(5, (err) => {
         should.not.exist(err);
-        return cb()
+        return cb();
       }),
-    ], done)
+    ], done);
   });
 
   it('Range validate', (done) => {
@@ -95,5 +95,5 @@ describe('NUMERIC SCHEMA TEST', () => {
       }),
 
     ], done);
-  })
+  });
 });

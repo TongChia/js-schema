@@ -21,6 +21,9 @@ _.each(vjs, (v, k) => {
     formats[kebab(k.slice(2))] = v;
 });
 
+formats.ipv4 = _.partial(vjs.isIP, _, 4);
+formats.ipv6 = _.partial(vjs.isIP, _, 6);
+
 _.each(
   {
     'enum':    (v, arr) => _.includes(arr, v),

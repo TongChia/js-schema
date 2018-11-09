@@ -2,7 +2,7 @@ const _ = require('lodash');
 const $ = require('async');
 const {_keys} = require('./utils');
 const createSchema = require('./schemaFactory');
-const VError = require('./error');
+const {ValidationError} = require('./error');
 
 const object = createSchema('object', _.isObject);
 
@@ -18,7 +18,7 @@ _.each(
         $.each(_keys(obj, props),
           (path, cb) => props[path].isValid(obj[path], (err) => {
             if (!err) return cb();
-            return cb(new VError(`Invalid value for object.properties[${path}] ( ${err.message} ).`));
+            return cb(new ValidationError(`Invalid value for object.properties[${path}] ( ${err.message} ).`));
           }),
           callback
         )

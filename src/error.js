@@ -1,23 +1,50 @@
 const _ = require('lodash');
 
-const errMsgWrapper = (msg) => (ctx) => (_.get(msg, 'raw.0') || msg).replace();
+const err = (template, defaults) => {
+  if(_.get(template, 'isTemplate')) return template;
 
-// TODO: as tag template. ex: err`data should <= 3`
-function ValidationError (msg, ctx, ...rest) {
-  // if (msg.raw) return errMsgWrapper(msg, ctx, ...rest);
+  let source = _.trim(_.join(template, '') || '{value} should valid for schema:{type}:{keyword}({params}).');
+
+  return _.assign((ctx) => _.reduce(
+    _.defaults(defaults, ctx),
+    (result, value, key) => _.replace(result, RegExp(`{${key}}`, 'i'), value),
+    source
+  ), {source, isTemplate: true});
+};
+
+/**
+ *
+ * @param msg {string|function}
+ * @param ctx {object}
+ * @param ctx.status {string}
+ * @param ctx.path {string}
+ * @param ctx.params {string}
+ * @param ctx.keyword {string}
+ * @param ctx.type {string}
+ * @param ctx.value {*}
+ * @return {ValidationError}
+ * @constructor
+ */
+function ValidationError (msg, ctx) {
   if (!new.target) return new ValidationError(msg, ctx);
+
+  let {status = 422, error = 'ValidationError', path = '#', ...rest} = Object(ctx);
 
   Error.call(this);
   if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
   else this.stack = (new Error).stack;
 
-  this.name = 'ValidationError';
-  this.message = _.template(msg)({params: [], path: 'value', keyword: '', ...ctx});
-  this.status = 422;
+  _.assign(this, {
+    name: error, status, path,
+    message: err(msg)({path, ...rest})
+  });
 }
 
 ValidationError.prototype = Object.create(Error.prototype);
 ValidationError.prototype.constructor = Error;
 ValidationError.prototype.class = ValidationError;
 
-module.exports = ValidationError;
+module.exports = {
+  ValidationError,
+  err
+};

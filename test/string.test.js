@@ -2,6 +2,7 @@ const chai = require('chai');
 const faker = require('faker');
 const should = chai.should();
 const {string} = require('../src/string');
+const {err} = require('../src/error');
 
 describe('STRING SCHEMA TEST', () => {
 
@@ -13,7 +14,7 @@ describe('STRING SCHEMA TEST', () => {
       val.should.deep.equal(str);
 
       string.isValid(null, (err) => {
-        err.should.be.instanceOf(TypeError);
+        err.should.be.instanceOf(Error);
 
         return done();
       });
@@ -44,6 +45,19 @@ describe('STRING SCHEMA TEST', () => {
         await string.format('email').isValid('foobar');
       } catch (err) {
         err.should.instanceOf(Error);
+      }
+    });
+
+    it('IP', async () => {
+      const ip = faker.internet.ip(4);
+      const ipv4Schema = string.format(['ip', 4], err`\`{value}\` should be an ipv4 address.`);
+      (await ipv4Schema.isValid(ip)).should.equal(ip);
+
+      try {
+        await ipv4Schema.isValid('foobar');
+      } catch (err) {
+        err.should.instanceOf(Error);
+        err.message.should.equal('`foobar` should be an ipv4 address.');
       }
     });
 
