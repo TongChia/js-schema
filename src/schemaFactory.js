@@ -1,14 +1,13 @@
 const _ = require('lodash');
 const $ = require('async');
-const {_keys} = require('./utils');
+const {_keys, toJSON} = require('./utils');
 const {ValidationError} = require('./error');
 
 module.exports = function (type, checker) {
 
-  function Schema (definitions = {}, annotations = {}) {
-    if (!new.target) return new Schema(definitions, annotations);
+  function Schema (definitions = {}) {
+    if (!new.target) return new Schema(definitions);
     this._ = definitions;
-    this.$ = annotations;
   }
 
   Schema.validates = {};
@@ -16,9 +15,7 @@ module.exports = function (type, checker) {
   _.merge(Schema.prototype, {
     class: Schema,
 
-    toJSON: function () {
-      return _.mapValues(this._, _.first);
-    },
+    toJSON,
 
     isTyped: checker || _.constant(true),
 
@@ -35,21 +32,18 @@ module.exports = function (type, checker) {
         ), value);
 
       $.each(_keys(Schema.validates, this._), (keyword, cb) => {
-        const params = this._[keyword],
+        const [params, customMsg] = this._[keyword],
           {isAsync, validator, message} = Schema.validates[keyword];
 
-        if (isAsync) return validator(value, ...params, cb);
-        if (validator(value, ...params)) return cb();
+        if (isAsync) return validator(value, params, cb);
+        if (validator(value, params)) return cb();
 
-        return cb(new ValidationError(
-          _.get(this, ['$', 'messages', keyword]) || message,
-          {value, params, keyword, type}
-        ));
+        return cb(new ValidationError(customMsg || message, {value, params, keyword, type}));
       }, (err) => callback(err, value));
     }
   });
 
-  return _.assign(new Schema({type}), {
+  let schema = _.assign(new Schema({type}), {
     original: true,
 
     protoMethod: function (prop, method) {
@@ -57,19 +51,20 @@ module.exports = function (type, checker) {
       return this;
     },
 
-    addKeyword: function (keyword, ...defaultParams) {
-      return this.protoMethod(keyword, function (...params) {
-        if (_.get(_.last(params), 'isTemplate'))
-          _.set(this, ['$', 'messages', keyword], params.pop());
-        return new Schema({...this._, [keyword]: _.merge([], defaultParams, params)}, this.$);
+    addKeyword: function (keyword, defaults) {
+      return this.protoMethod(keyword, function (params, message) {
+        return new Schema({...this._, [keyword]: [_.defaultTo(params, defaults), message]});
       });
     },
 
     addValidate: function (keyword, validate, msg) {
-      const {isAsync, message = msg, validator = validate} = validate;
-      _.merge(Schema.validates, {[keyword]: _.omitBy({validator, message, isAsync}, _.isUndefined)});
-      return this.addKeyword(keyword);
+      const {isAsync, message = msg, validator = validate, defaults} = validate;
+      _.set(Schema.validates, keyword, _.omitBy({validator, message, isAsync}, _.isUndefined));
+      return this.addKeyword(keyword, defaults);
     }
   });
 
+  _.each(['title', 'description', 'examples', 'default'], (k) => schema.addKeyword(k));
+
+  return schema;
 };

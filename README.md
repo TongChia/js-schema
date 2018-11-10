@@ -1,6 +1,8 @@
 js-schema
 =========
-JS Schema validation, compatible with `json-schema`.
+JS Schema validation library, compatible with `json-schema`.  
+But not fully complying with `json-schema`, the goal is to do data protection between the front, back end and database or micro services.  
+And make it reusable as possible.
 
 QUICK START
 -----------
@@ -18,10 +20,19 @@ const {object, string, number, date, array, boolean} = require('jsschema');
 const person = object
   .properties({
     name    : string.maxLength(200).minLength(5),
-    age     : number.min(0, true).max(150),
-    birthday: date,
-    married : boolean,
-    books   : array.items(string)
+    age     : number.min(0).max(130, true), // > 0 && <= 130
+    birthday: date.after('1890-01-01'),
+    married : boolean.default(false),
+    books   : array.items(object.properties({
+      title : string,
+      author: string,
+      publication_date: string.format('date')
+    })),
+    loggedIn: object.properties({
+      ip   : string.format('ip'), // include ipv4 & ipv6
+      oauth: string.enum(['facebook', 'github']),
+      date : date.default(Date.now)
+    })
   })
   .required(['name', 'age', 'birthday']);
 

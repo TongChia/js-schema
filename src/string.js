@@ -30,12 +30,13 @@ _.each(
     minLength: (v, l) => v.length >= l,
     maxLength: (v, l) => v.length <= l,
     pattern:   (v, r) => RegExp(r).test(v),
-    format:    (v, format, ...rest) => {
+    format:    (v, f) => {
+      let [format, ...rest] = [].concat(f);
       if (_.has(formats, format))
         return formats[format](v, ...rest);
       throw RangeError(
         'Invalid format `' + format +'`, see ' +
-        'https://github.com/TongChia/js-schema/issues?q=is%3Aissue+' + format
+        'https://github.com/TongChia/js-schema/issues?q=is%3Aissue+format'
       );
     }
   },

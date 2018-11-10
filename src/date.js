@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const createSchema = require('./schemaFactory');
+const {toJSON} = require('./utils');
 
 const date = createSchema('date', _.isDate);
 
@@ -15,7 +16,7 @@ _.each(
 );
 
 date.protoMethod('toJSON', function () {
-  return {type: 'string', format: 'date-time', _: this._, ...this.$}
+  return {type: 'string', format: 'date-time', '$js-schema$': toJSON.call(this)};
 });
 
 module.exports = {date};
