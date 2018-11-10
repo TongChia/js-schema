@@ -55,12 +55,12 @@ VALIDATE
     - [x] minLength
     - [x] maxLength
     - [x] format
-      - [x] \* from `chriso/validator.js`
+      - [x] \* from `chriso/validator.js` ✨
       - [x] data-time (full-date, full-time)
       - [x] ipv4, ipv6
       - [x] email
       - [x] hostname
-      - [ ] uri, iri
+      - [ ] uri, iri 
       - [ ] uri-template
       - [ ] json
       - [ ] regex
@@ -75,13 +75,14 @@ VALIDATE
   - date
     - [x] after
     - [x] before
+    - [ ] convert strings (`date-time`, `full-date`)
   - array
     - [x] minItems
     - [x] maxItems
     - [x] unique
     - [x] items
     - [x] contains
-    - [ ] entries
+    - [ ] entries ✨
     - [ ] Overload function ✨
   - object
     - [x] properties
@@ -107,9 +108,14 @@ VALIDATE
   - [ ] not
 - [ ] Constant values
 - [ ] Enumerated values
-- [ ] json-schema
-  - [ ] to json-schema
+- json-schema
+  - [*] to json-schema
   - [ ] from json schema
+- referenced schema
+  - [ ] $id ⚡️
+  - [ ] $ref ⚡️
+  - [ ] resolve method (browser & nodejs) ⚡️
+  - [ ] cache
 
 ### Custom
 ```javascript
@@ -138,9 +144,12 @@ string.addValidate(
 ```
 
 #### TODO
-- [x] custom validate;
+- [ ] custom validate;
+- [ ] function list;
+  - [ ] test report;
+  - [ ] automatic update;
 - [x] async validator (with callback);
-- [ ] async validator (es2015);
+- [x] async validator (es2015);
 - [x] format validate;
 - [ ] browser test;
 - [ ] toModel

@@ -16,7 +16,7 @@ _.each(
 );
 
 date.protoMethod('toJSON', function () {
-  return {type: 'string', format: 'date-time', '$js-schema$': toJSON.call(this)};
+  return _.merge(toJSON.call(this), {type: 'string', format: 'date-time', $js_schema: {type: 'date'}});
 });
 
 module.exports = {date};

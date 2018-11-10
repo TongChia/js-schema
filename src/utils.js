@@ -3,9 +3,12 @@ const _ = require('lodash');
 const version = '0.2';
 
 const toJSON = function () {
-  return _.set(_.mapValues(this._, _.first), '$js-schema$', {
-    version,
-    'error_message': _.mapValues(this._, _.partial(_.get, _, 2))
+  return _.merge(_.mapValues(this._, _.first), {
+    type: this.type,
+    $js_schema: {
+      version,
+      'error_message': _.mapValues(this._, _.partial(_.get, _, 2))
+    }
   });
 };
 
