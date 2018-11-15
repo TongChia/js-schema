@@ -58,8 +58,8 @@ describe('NUMERIC SCHEMA TEST', () => {
     let minNumSchema = number.min(int);
     let rangeSchema  = number.range(float, int, true);
 
-    _.get(rangeSchema, '_.maximum.0').should.equal(int);
-    _.get(rangeSchema, '_.minimum.0').should.equal(float);
+    _.get(rangeSchema, '_.maximum').should.equal(int);
+    _.get(rangeSchema, '_.minimum').should.equal(float);
 
     series([
 

@@ -8,4 +8,6 @@ module.exports = {
   ...require('./object'),
   ...require('./error'),
   ...require('./buffer'),
+  ...require('./any'),
+  ...require('./none'),
 };

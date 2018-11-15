@@ -1,8 +1,9 @@
-js-schema
+JS-SCHEMA
 =========
 JS Schema validation library, compatible with `json-schema`.  
-But not fully complying with `json-schema`, the goal is to do data protection between the front, back end and database or micro services.  
-And make it reusable as possible.
+But not fully complying with `json-schema`, the goal is to do data protection between the front, back end and database or micro services. 
+and make it reusable as possible.  
+
 
 QUICK START
 -----------
@@ -109,12 +110,12 @@ VALIDATE
 - [ ] Constant values
 - [ ] Enumerated values
 - json-schema
-  - [*] to json-schema
+  - [x] to json-schema
   - [ ] from json schema
 - referenced schema
   - [ ] $id ⚡️
   - [ ] $ref ⚡️
-  - [ ] resolve method (browser & nodejs) ⚡️
+  - [ ] resolve method (browser & nodeJs) ⚡️
   - [ ] cache
 
 ### Custom
@@ -124,8 +125,8 @@ const {string} = require('jsschema');
 string.addValidate(
   'keyword', // the keyword
   {
-    validator: (value, parameter) => check(value, parameter), // return true/false;
-    message: 'Invalid value ( <%= value %> ) for <%= keyword %>(<%= params %>).',
+    validator: (value, params) => check(value, parameter), // return true/false;
+    message: 'Invalid value ( {value} ) for {keyword}({params}).',
   }
 )
 
@@ -133,7 +134,7 @@ string.addValidate(
   'keyword',
   {
     isAsync: true,
-    validator: (value, parameter, callback) => {
+    validator: (value, params, callback) => {
       // check value
       if ('ok')
         return callback(null, value)

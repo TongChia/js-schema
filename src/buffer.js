@@ -1,10 +1,9 @@
 const _ = require('lodash');
-const createSchema = require('./schemaFactory');
-const {toJSON} = require('./utils');
+const {createSchema, toJSON} = require('./schema');
 
 const buffer = createSchema('buffer', _.isBuffer);
 
-buffer.protoMethod('toJSON', function () {
+buffer.superMethod('toJSON', function () {
   return _.merge(toJSON.call(this), {type: 'string', $js_schema: {type: 'buffer'}});
 });
 

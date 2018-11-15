@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const createSchema = require('./schemaFactory');
+const {createSchema} = require('./schema');
 
 const number = createSchema('number', (num) => (_.isNumber(num) && !_.isNaN(num)));
 
@@ -19,14 +19,9 @@ _.each({
     return eq ? this.minimum(n, ...rest) : this.exclusiveMinimum(n, ...rest);
   },
   range: function (min, max, ...rest) {
-    let result;
-    if (_.isNumber(min))
-      result = this.min(min, ...rest);
-    if (max > min)
-      result = result.max(max, ...rest);
-    return result;
+    return this.min(min, ...rest).max(max, ...rest);
   }
-}, (method, keyword) => number.protoMethod(keyword, method));
+}, (method, keyword) => number.superMethod(keyword, method));
 
 module.exports = {
   number,

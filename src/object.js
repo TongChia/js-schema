@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const $ = require('async');
 const {_keys} = require('./utils');
-const createSchema = require('./schemaFactory');
+const {createSchema} = require('./schema');
 const {ValidationError} = require('./error');
 
 const object = createSchema('object', _.isObject);
@@ -27,7 +27,7 @@ _.each(
   (validate, keyword) => object.addValidate(keyword, validate)
 );
 
-object.protoMethod('size', function (min, max, ...rest) {
+object.superMethod('size', function (min, max, ...rest) {
   let result;
   if (min > 0)
     result = this.minProperties(min, ...rest);
