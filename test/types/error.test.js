@@ -1,7 +1,7 @@
 const chai = require('chai');
 const should = chai.should();
 const _ = require('lodash');
-const {err} = require('../src/error');
+const {err} = require('../../src/error');
 
 describe('ERROR TEST', () => {
 

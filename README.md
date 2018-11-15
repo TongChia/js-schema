@@ -1,8 +1,10 @@
 JS-SCHEMA
 =========
 JS Schema validation library, compatible with `json-schema`.  
-But not fully complying with `json-schema`, the goal is to do data protection between the front, back end and database or micro services. 
-and make it reusable as possible.  
+But not fully complying with `json-schema`,
+the goal is to do data protection between the front, back end and database or micro services;
+make it reusable as possible;
+pursues simple and stylish code style.
 
 
 QUICK START

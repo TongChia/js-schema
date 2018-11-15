@@ -3,10 +3,10 @@ const should = chai.should();
 const faker = require('faker');
 const _ = require('lodash');
 const {series} = require('async');
-const {array, unique} = require('../src/array');
-const {number} = require('../src/number');
-const {string} = require('../src/string');
-const {nil} = require('../src/null');
+const {array, unique} = require('../../src/array');
+const {number} = require('../../src/number');
+const {string} = require('../../src/string');
+const {nil} = require('../../src/null');
 
 describe('ARRAY SCHEMA TEST', () => {
   

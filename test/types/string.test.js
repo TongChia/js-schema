@@ -1,8 +1,10 @@
 const chai = require('chai');
 const faker = require('faker');
 const should = chai.should();
-const {string} = require('../src/string');
-const {err} = require('../src/error');
+const _ = require('lodash');
+const $ = require('async');
+const {string} = require('../../src/string');
+const {err} = require('../../src/error');
 
 describe('STRING SCHEMA TEST', () => {
 
@@ -19,6 +21,24 @@ describe('STRING SCHEMA TEST', () => {
         return done();
       });
     });
+  });
+
+  it('String pattern validate', (done) => {
+
+    $.parallel([
+      (cb) => string.pattern('foo').isValid('bar', (err) => {
+        err.should.be.instanceOf(Error);
+        return cb();
+      }),
+
+      (cb) => string.pattern(/foo/).isValid('foobar', cb),
+
+      (cb) => string.pattern('^foo$').isValid('foo', cb),
+
+      (cb) => string.pattern(['^foo$', 'i']).isValid('Foo', cb),
+
+    ], done);
+
   });
 
   it('String length', (done) => {

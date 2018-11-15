@@ -3,9 +3,9 @@ const should = chai.should();
 const faker = require('faker');
 const _ = require('lodash');
 const $ = require('async');
-const {object} = require('../src/object');
-const {number} = require('../src/number');
-const {string} = require('../src/string');
+const {object} = require('../../src/object');
+const {number} = require('../../src/number');
+const {string} = require('../../src/string');
 
 describe('OBJECT SCHEMA TEST', () => {
 

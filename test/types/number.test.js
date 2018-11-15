@@ -2,7 +2,7 @@ const chai = require('chai');
 const should = chai.should();
 const _ = require('lodash');
 const {series} = require('async');
-const {number, integer} = require('../src/number');
+const {number, integer} = require('../../src/number');
 
 describe('NUMERIC SCHEMA TEST', () => {
 

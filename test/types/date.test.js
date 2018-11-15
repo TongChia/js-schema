@@ -1,6 +1,6 @@
 const chai = require('chai');
 const should = chai.should();
-const {date} = require('../src/date');
+const {date} = require('../../src/date');
 
 describe('DATE SCHEMA TEST', () => {
 
