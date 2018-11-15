@@ -13,6 +13,13 @@ const toJSON = function () {
   };
 };
 
+const toString = function () {
+  let keys = _.keys(this._);
+  return '<Schema ' +
+    keys.splice(0, 3).map(k => (k + ':' + this._[k])).join(' ') +
+    (keys.length ? ' ...' : '') + ' >';
+};
+
 function createSchema (type, checker) {
 
   function Schema (definitions = {}) {
@@ -25,7 +32,7 @@ function createSchema (type, checker) {
   _.merge(Schema.prototype, {
     class: Schema,
 
-    toJSON,
+    toJSON, toString,
 
     set: function (key, value) {
       return _.set(this._, key, value);
