@@ -1,28 +1,27 @@
 const _ = require('lodash');
 
 const messages = {
-  defaults     : '`{value}` should valid for schema:{type}:{keyword}({params}).',
-  typeError    : '`{value}` should instance of {type}.',
-  itemError    : '`tuple`[{path}] should valid for schema:array:items ( {error.message} ).',
-  listError    : '`list` should valid for schema:array:items[{path}] ( {error.message} ).',
-  containsError: '',
-  propertyError: 'Invalid value for object.properties[{path}] ( {error.message} ).',
+  defaultError : '`{value}` should valid for schema:{type}.{keyword}({params})',
+  typeError    : '`{value}` should instance of {type}',
+  itemError    : 'Invalid items[{path}] for schema:array.items -> {error.message}',
+  listError    : 'Invalid element for schema:array.items[{path}] -> {error.message}',
+  containsError: 'Invalid items for schema:array.contains -> {error.message}',
+  propertyError: 'Invalid property for schema:object.properties[{path}] -> {error.message}',
 };
 
 const err = (template, defaults) => {
   if(_.get(template, 'isTemplate')) return template;
 
-  let source  = _.trim(_.join(template, '')) || messages.defaults;
-  let reserve = _.clone(defaults);
+  const source  = _.trim(_.join(template, '')) || messages.defaultError;
+  const reserve = _.clone(defaults);
 
   return _.assign((context) => {
     let ctx = _.defaults(context, reserve);
-
     return _.reduce(
-      source.match(/(?<={)[^{^}]+(?=})/g),
-      (result, req) => _.replace(result,
-        RegExp('{' + req + '}', 'i'),
-        _.has(ctx, req) ? _.get(ctx, req) : '?' + req
+      source.match(/{[^{^}]+}/g),
+      (result, matched) => _.replace(
+        result, RegExp(matched, 'i'),
+        _.get(ctx, matched.slice(1, -1)) || '?'
       ),
       source
     );

@@ -7,7 +7,7 @@ const {_uniq} = require('./utils');
 const _err = (path, cb) => (err) => {
   if (!err) return cb();
   return cb(new ValidationError(messages.itemError, {path}));
-}; // TODO: error message with more information;
+};
 
 const array = createSchema('array', _.isArray);
 const isAsync = true;

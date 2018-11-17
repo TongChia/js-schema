@@ -59,7 +59,8 @@ describe('STRING SCHEMA TEST', () => {
 
     it('Email', async () => {
       const email = faker.internet.email();
-      (await string.format('email').isValid(email)).should.equal(email);
+      const result = await string.format('email').isValid(email);
+      result.should.equal(email);
 
       try {
         await string.format('email').isValid('foobar');
@@ -71,7 +72,8 @@ describe('STRING SCHEMA TEST', () => {
     it('IP', async () => {
       const ip = faker.internet.ip(4);
       const ipv4Schema = string.format(['ip', 4], err`\`{value}\` should be an ipv4 address.`);
-      (await ipv4Schema.isValid(ip)).should.equal(ip);
+      const result = await ipv4Schema.isValid(ip);
+      result.should.equal(ip);
 
       try {
         await ipv4Schema.isValid('foobar');

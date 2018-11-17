@@ -14,10 +14,10 @@ const toJSON = function () {
 };
 
 const toString = function () {
-  let keys = _.keys(this._);
-  return '<Schema ' +
-    keys.splice(0, 3).map(k => (k + ':' + this._[k])).join(' ') +
-    (keys.length ? ' ...' : '') + ' >';
+  let keys = _.pull(_.keys(this._), 'type');
+  return 'schema:' + this._.type + '.' +
+    keys.splice(0, 3).map(k => (k + '(' + this._[k] + ')')).join('.') +
+    (keys.length ? '...' : '') ;
 };
 
 function createSchema (type, checker) {
