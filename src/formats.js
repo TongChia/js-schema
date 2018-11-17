@@ -1,17 +1,15 @@
 const _ = require('lodash');
 const vjs = require('validator');
 
-const date = '(?<fullyear>\\d{4})-(?<month>0[1-9]|1[0-2])-(?<day>0[1-9]|[12][0-9]|3[01])';
-const time = '(?<hour>[01][0-9]|2[0-3]):(?<minute>[0-5][0-9]):(?<second>[0-5][0-9]|60)(?<secfrac>\\.[0-9]+)?(?<offset>[zZ]|[-+]([01][0-9]|2[0-3]):[0-5][0-9])';
+const date = '(\\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])';
+const time = '([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\\.[0-9]+)?([zZ]|[-+]([01][0-9]|2[0-3]):[0-5][0-9])';
+const hostname = '([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])(.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]))*';
 
 const formats = _.mapValues({
-  'date'     : `^${date}$`,
-  'time'     : `^${time}$`,
-  'date-time': `^(?<date>${date})[Tt ](?<time>${time})$`,
-  'hostname' : '^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])(.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]))*$',
-}, (match) => (str) => RegExp(match).test(str));
+  hostname, date, time, 'date-time': '(' + date + ')[Tt ](' + time + ')'
+}, (pattern) => (str) => RegExp('^' + pattern + '$').test(str));
 
-const kebab = _.flow([_.kebabCase, _.partial(_.replace, _, /-(\d)/g, '$1')]);
+const kebab = (str) => _.chain(str).kebabCase().replace(/-(\d)/g, '$1').value();
 
 _.each(vjs, (v, k) => {
   if (_.startsWith(k, 'is') && v.call)

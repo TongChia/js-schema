@@ -55,7 +55,37 @@ describe('STRING SCHEMA TEST', () => {
     });
   });
 
-  describe('STRING FORMAT TEST', () => {
+  describe('STRING FORMAT', () => {
+
+    it('full-date', (done) => {
+      const $date = string.format('date');
+
+      $date.isValid('foobar', (err) => {
+        err.should.instanceOf(Error);
+
+        $date.isValid('1987-10-18', done);
+      });
+    });
+
+    it('full-time', (done) => {
+      const $time = string.format('time');
+
+      $time.isValid('foobar', (err) => {
+        err.should.instanceOf(Error);
+
+        $time.isValid('09:13:05.102Z', done);
+      });
+    });
+
+    it('date-time', (done) => {
+      const $dateTime = string.format('date-time');
+
+      $dateTime.isValid(new Date().toString(), (err) => {
+        err.should.instanceOf(Error);
+
+        $dateTime.isValid(new Date().toISOString(), done);
+      });
+    });
 
     it('Email', async () => {
       const email = faker.internet.email();
