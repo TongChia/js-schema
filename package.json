@@ -5,7 +5,7 @@
   "main": "./src/index.js",
   "scripts": {
     "lint": "eslint src",
-    "test": "mocha --recursive --require @babel/register --reporter markdown",
+    "test": "mocha --recursive --require @babel/register",
     "build": "babel ./src/ -d ./lib/"
   },
   "repository": {
