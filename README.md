@@ -1,5 +1,6 @@
 JS-SCHEMA
 =========
+[![Build Status](https://travis-ci.org/TongChia/js-schema.svg?branch=master)](https://travis-ci.org/TongChia/js-schema)  
 JS Schema validation library, compatible with `json-schema`.  
 But not fully complying with `json-schema`,
 the goal is to do data protection between the front, back end and database or micro services;
