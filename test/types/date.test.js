@@ -1,6 +1,7 @@
 const chai = require('chai');
 const should = chai.should();
 const {date} = require('../../src/date');
+const {series} = require('async');
 
 describe('DATE SCHEMA TEST', () => {
 
@@ -22,29 +23,36 @@ describe('DATE SCHEMA TEST', () => {
 
   it('Range validate', (done) => {
 
-    date.after(day).isValid(now, (err) => {
-      should.not.exist(err);
+    series([
 
-      date.before(day).isValid(now, (err) => {
+      cb => date.before(day).isValid(now, (err) => {
         err.should.be.instanceOf(Error);
+        return cb();
+      }),
 
-        return done();
-      });
-    });
+      // `now` should before realtime `now`;
+      cb => date.before(Date.now).isValid(now, cb),
+
+      // `after` & `before` could be date-time string;
+      cb => date.after(day).isValid(now, cb)
+
+    ], done);
   });
 
-  it('Accept RfC string', (done) => {
-
-    date.RfCString().isValid('foobar', (err) => {
-      err.should.be.instanceOf(Error);
-
-      date.RfCString().isValid(now, (err) => {
-        should.not.exist(err);
-
-        date.RfCString().isValid(day, done);
-      });
-    });
-
-  });
+  // it('Accept date-time format string', (done) => {
+  //
+  //   series([
+  //     cb => date.ISOString().isValid('foobar', (err) => {
+  //       err.should.be.instanceOf(Error);
+  //       return cb();
+  //     }),
+  //
+  //     cb => date.ISOString().isValid(now, cb),
+  //
+  //     cb => date.ISOString().isValid(day, cb)
+  //
+  //   ], done);
+  //
+  // });
 
 });

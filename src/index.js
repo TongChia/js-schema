@@ -10,4 +10,5 @@ module.exports = {
   ...require('./buffer'),
   ...require('./any'),
   ...require('./none'),
+  ...require('./function'),
 };

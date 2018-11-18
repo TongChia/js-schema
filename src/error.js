@@ -1,12 +1,13 @@
 const _ = require('lodash');
 
 const messages = {
-  defaultError : '`{value}` should valid for schema:{type}.{keyword}({params})',
-  typeError    : '`{value}` should instance of {type}',
-  itemError    : 'Invalid items[{path}] for schema:array.items -> {error.message}',
-  listError    : 'Invalid element for schema:array.items[{path}] -> {error.message}',
-  containsError: 'Invalid items for schema:array.contains -> {error.message}',
-  propertyError: 'Invalid property for schema:object.properties[{path}] -> {error.message}',
+  defaultError   : '`{value}` should valid for schema:{type}.{keyword}({params})',
+  typeError      : '`{value}` should instance of {type}',
+  itemError      : 'Invalid items[{path}] for schema:array.items -> {error.message}',
+  listError      : 'Invalid element for schema:array.items[{path}] -> {error.message}',
+  containsError  : 'Invalid items for schema:array.contains -> {error.message}',
+  propertyError  : 'Invalid property for schema:object.properties[{path}] -> {error.message}',
+  additionalError: 'Invalid item for schema:array.additionalItems({subSchema}) -> {error.message}',
 };
 
 const err = (template, defaults) => {
@@ -44,14 +45,14 @@ const err = (template, defaults) => {
 function ValidationError (msg, ctx) {
   if (!new.target) return new ValidationError(msg, ctx);
 
-  let {status = 422, error = 'ValidationError', path = '#', ...rest} = Object(ctx);
+  let {status = 422, path = '#', ...rest} = Object(ctx);
 
   Error.call(this);
   if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
   else this.stack = (new Error).stack;
 
   _.assign(this, {
-    name: error, status, path,
+    name: status, path,
     message: err(msg)({path, ...rest})
   });
 }

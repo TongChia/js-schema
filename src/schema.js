@@ -5,6 +5,10 @@ const {ValidationError, messages} = require('./error');
 
 const version = '0.2';
 
+// const toSchema = function (schema) {
+//
+// };
+
 const toJSON = function () {
   return {
     $schema: 'http://json-schema.org/draft-07/schema#',
@@ -15,7 +19,7 @@ const toJSON = function () {
 
 const toString = function () {
   let keys = _.pull(_.keys(this._), 'type');
-  return 'schema:' + this._.type + '.' +
+  return 'schema:' + this._.type + (keys.length ? '.' : '') +
     keys.splice(0, 3).map(k => (k + '(' + this._[k] + ')')).join('.') +
     (keys.length ? '...' : '') ;
 };
@@ -54,8 +58,8 @@ function createSchema (type, checker) {
       $.each(_keys(Schema.validates, this._), (keyword, cb) => {
         const params = this._[keyword], {isAsync, validator, message} = Schema.validates[keyword];
 
-        if (isAsync) return validator.call(this._, value, params, cb);
-        if (validator.call(this._, value, params)) return cb();
+        if (isAsync) return validator.call(this, value, params, cb);
+        if (validator.call(this, value, params)) return cb();
 
         return cb(new ValidationError(_.get(this._, ['errorMessage', keyword]) || message, {value, params, keyword, type}));
       }, (err) => callback(err, value));

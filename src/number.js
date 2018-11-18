@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const {createSchema} = require('./schema');
 
-const number = createSchema('number', (num) => (_.isNumber(num) && !_.isNaN(num)));
+const number = createSchema('number', _.isFinite);
 
 _.each({
   maximum: _.lte,

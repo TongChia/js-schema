@@ -4,7 +4,7 @@ JS Schema validation library, compatible with `json-schema`.
 But not fully complying with `json-schema`,
 the goal is to do data protection between the front, back end and database or micro services;
 make it reusable as possible;
-pursues simple and stylish code style.
+pursues concise and stylish code style.
 
 
 QUICK START
@@ -75,10 +75,11 @@ VALIDATE
     - [x] range (alias to `min, max`)
     - [x] integer
     - [x] multipleOf
+    - [ ] converter (`numeric`)
   - date
     - [x] after
     - [x] before
-    - [ ] convert strings (`date-time`, `full-date`)
+    - [ ] converter (`date-time`, `full-date`, `date-string`, `time-stamp`)
   - array
     - [x] minItems
     - [x] maxItems
@@ -98,7 +99,8 @@ VALIDATE
     - [ ] patternProperties
   - [x] null (nil)
   - [x] boolean
-  - [x] buffer
+  - buffer
+    - [ ] converter (`strings`, `base64`)
 - Metadata
   - [ ] title
   - [ ] description
@@ -128,7 +130,7 @@ string.addValidate(
   'keyword', // the keyword
   {
     validator: (value, params) => check(value, parameter), // return true/false;
-    message: 'Invalid value ( {value} ) for {keyword}({params}).',
+    message: '`{value}` should valid for schema:{type}.{keyword}({params})',
   }
 )
 

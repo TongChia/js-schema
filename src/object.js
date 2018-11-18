@@ -2,7 +2,7 @@ const _ = require('lodash');
 const $ = require('async');
 const {_keys} = require('./utils');
 const {createSchema} = require('./schema');
-const {ValidationError} = require('./error');
+const {ValidationError, messages} = require('./error');
 
 const object = createSchema('object', _.isObject);
 
@@ -14,11 +14,14 @@ _.each(
     maxProperties: (obj, n) => _.size(obj) <= n,
     properties: {
       isAsync: true,
-      validator: (obj, props, callback) =>
-        $.each(_keys(obj, props),
-          (path, cb) => props[path].isValid(obj[path], (err) => {
-            if (!err) return cb();
-            return cb(new ValidationError(`Invalid value for object.properties[${path}] ( ${err.message} ).`));
+      validator: (value, props, callback) =>
+        $.each(_keys(value, props),
+          (path, cb) => props[path].isValid(value[path], (error, result) => {
+            if (error) return cb(new ValidationError(messages.propertyError, {
+              path, value, error, subSchema: props[path]
+            }));
+            value[path] = result;
+            return cb();
           }),
           callback
         )

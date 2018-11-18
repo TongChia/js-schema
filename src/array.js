@@ -4,13 +4,9 @@ const {createSchema} = require('./schema');
 const {ValidationError, messages} = require('./error');
 const {_uniq} = require('./utils');
 
-const _err = (path, cb) => (err) => {
-  if (!err) return cb();
-  return cb(new ValidationError(messages.itemError, {path}));
-};
-
 const array = createSchema('array', _.isArray);
 const isAsync = true;
+const defaults = true;
 
 _.each(
   {
@@ -25,22 +21,38 @@ _.each(
       )
     },
     items: {
-      isAsync,
-      validator: (arr, items, callback) => {
+      isAsync, defaults,
+      validator: (value, items, callback) => {
         _.isArray(items) ?
           // Tuple validation
-          $.eachOf(items, (s, i, cb) => s.isValid(arr[i], _err(i, cb)), callback) :
+          $.eachOf(items, (subSchema, path, cb) => subSchema.isValid(value[path], (error, result) => {
+            if (error) return cb(new ValidationError(messages.itemError, {path, value, error, subSchema}));
+            value[path] = result;
+            return cb();
+          }), callback) :
           // List validation
-          $.eachOf(arr, (v, i, cb) => items.isValid(v, _err(i, cb)), callback);
+          $.eachOf(value, (element, path, cb) => items.isValid(element, (error, result) => {
+            if (error) return cb(new ValidationError(messages.listError, {path, value, error, subSchema: items}));
+            value[path] = result;
+            return cb();
+          }), callback);
       }
     },
     additionalItems: {
-      isAsync,
-      validator: (arr, schema, callback) => {
-        const items = _.get(this, '_.items.0');
-        if (!_.isArray(items) || arr.length <= items.length) return callback();
-        if (_.isFunction(schema.isValid))
-          return $.eachOf(arr, (v, i, cb) => items.isValid(v, _err(i, cb)), callback);
+      isAsync, defaults,
+      validator: function (value, subSchema, callback) {
+        const items = this.get('items');
+        if (!(items.length < value.length)) return callback(null, value);
+        return $.eachOf(
+          _.takeRight(value, value.length - items.length),
+          (element, i, cb) => subSchema.isValid(element, (error, result) => {
+            let path = items.length + i;
+            if (error) return cb(new ValidationError(messages.additionalError, {path, value, error, subSchema}));
+            value[path] = result;
+            return cb();
+          }),
+          callback
+        );
       }
     }
   },

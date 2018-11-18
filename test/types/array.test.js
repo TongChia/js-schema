@@ -3,10 +3,7 @@ const should = chai.should();
 const faker = require('faker');
 const _ = require('lodash');
 const {series} = require('async');
-const {array, unique} = require('../../src/array');
-const {number} = require('../../src/number');
-const {string} = require('../../src/string');
-const {nil} = require('../../src/null');
+const {number, string, date, nil, array, unique} = require('../../src');
 
 describe('ARRAY SCHEMA TEST', () => {
   
@@ -84,4 +81,28 @@ describe('ARRAY SCHEMA TEST', () => {
     ], done);
 
   });
+
+  it('Additional items', (done) => {
+
+    let lists = array.items(string).additionalItems(number);
+    let tuple = array.items([number, string, number, nil]).additionalItems(number);
+
+    series([
+      cb => lists.isValid(['foo', 'bar'], cb),
+
+      cb => tuple.isValid([1, 'bar', 2, null], cb),
+
+      cb => tuple.isValid([1, 'bar', 2, null, 3], cb),
+
+      cb => tuple.isValid([1, 'bar', 2, null, 'bad egg'], (err) => {
+        err.should.be.instanceOf(Error);
+        return cb();
+      }),
+
+      // TODO: .additionalItems(date.accept('date-time'))
+
+    ], done);
+
+  });
+
 });
