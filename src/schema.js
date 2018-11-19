@@ -5,6 +5,7 @@ const {ValidationError, messages} = require('./error');
 
 const version = '0.2';
 
+// TODO: ↓
 // const toSchema = function (schema) {
 //
 // };
@@ -38,22 +39,22 @@ function createSchema (type, checker) {
 
     toJSON, toString,
 
-    set: function (key, value) {
+    isTyped: checker || _.stubTrue,
+
+    set (key, value) {
       return _.set(this._, key, value);
     },
 
-    get: function (key) {
+    get (key) {
       return _.get(this._, key);
     },
 
-    isTyped: checker || _.constant(true),
-
-    isValid: function (value, callback) {
+    isValid (value, callback) {
       if (!callback && !_.eq(typeof Promise, 'undefined'))
         return new Promise((resolve, reject) => this.isValid(value, (err) => err ? reject(err) : resolve(value)));
 
       if (!this.isTyped(value))
-        return callback(new ValidationError(messages.typeError, {type, value, error: 'TypeError'}), value);
+        return callback(new ValidationError(messages.typeError, {type, value, errorType: 'TypeError'}), value);
 
       $.each(_keys(Schema.validates, this._), (keyword, cb) => {
         const params = this._[keyword], {isAsync, validator, message} = Schema.validates[keyword];
@@ -69,13 +70,13 @@ function createSchema (type, checker) {
   let schema = _.assign(new Schema({type}), {
     original: true,
 
-    superMethod: function (prop, method) {
+    superMethod (prop, method) {
       // if (arguments.length === 1) return this.prototype[prop];
       Schema.prototype[prop] = method;
       return this;
     },
 
-    addKeyword: function (keyword, defaults) {
+    addKeyword (keyword, defaults) {
       let def = _.clone(defaults);
       return this.superMethod(keyword, function (params, message) {
         let schema = new Schema({...this._, [keyword]: _.defaultTo(params, def)});
@@ -84,7 +85,7 @@ function createSchema (type, checker) {
       });
     },
 
-    addValidate: function (keyword, validate, msg) {
+    addValidate (keyword, validate, msg) {
       const {isAsync, message = msg, validator = validate, defaults} = validate;
       _.set(Schema.validates, keyword, _.omitBy({validator, message, isAsync}, _.isUndefined));
       return this.addKeyword(keyword, defaults);

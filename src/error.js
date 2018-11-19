@@ -7,7 +7,7 @@ const messages = {
   listError      : 'Invalid element for schema:array.items[{path}] -> {error.message}',
   containsError  : 'Invalid items for schema:array.contains -> {error.message}',
   propertyError  : 'Invalid property for schema:object.properties[{path}] -> {error.message}',
-  additionalError: 'Invalid item for schema:array.additionalItems({subSchema}) -> {error.message}',
+  additionalError: 'Invalid item for schema:{type}.{keyword}({subSchema}) -> {error.message}',
 };
 
 const err = (template, defaults) => {
@@ -45,14 +45,14 @@ const err = (template, defaults) => {
 function ValidationError (msg, ctx) {
   if (!new.target) return new ValidationError(msg, ctx);
 
-  let {status = 422, path = '#', ...rest} = Object(ctx);
+  let {status = 422, errorType = 'ValidationError', path = '#', ...rest} = Object(ctx);
 
   Error.call(this);
   if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
   else this.stack = (new Error).stack;
 
   _.assign(this, {
-    name: status, path,
+    name: errorType, status, path,
     message: err(msg)({path, ...rest})
   });
 }

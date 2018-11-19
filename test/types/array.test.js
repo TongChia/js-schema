@@ -96,6 +96,7 @@ describe('ARRAY SCHEMA TEST', () => {
 
       cb => tuple.isValid([1, 'bar', 2, null, 'bad egg'], (err) => {
         err.should.be.instanceOf(Error);
+        err.path.should.eq(4);
         return cb();
       }),
 

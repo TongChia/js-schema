@@ -86,13 +86,14 @@ VALIDATE
     - [x] maxItems
     - [x] unique
     - [x] items
+    - [x] additionalItems
     - [x] contains
     - [ ] entries ✨
     - [ ] Overload function ✨
   - object
     - [x] properties
     - [x] required
-    - [ ] additionalProperties
+    - [x] additionalProperties
     - [x] dependencies
       - [ ] schema dependencies
     - [ ] propertyNames

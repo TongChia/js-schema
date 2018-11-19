@@ -3,9 +3,7 @@ const should = chai.should();
 const faker = require('faker');
 const _ = require('lodash');
 const $ = require('async');
-const {object} = require('../../src/object');
-const {number} = require('../../src/number');
-const {string} = require('../../src/string');
+const {object, number, string} = require('../../src');
 
 describe('OBJECT SCHEMA TEST', () => {
 
@@ -120,6 +118,25 @@ describe('OBJECT SCHEMA TEST', () => {
         return cb();
       })
 
+    ], done);
+  });
+
+  it('Additional properties', (done) => {
+
+    $.series([
+      cb => object
+        .properties({age: number})
+        .additionalProperties(string)
+        .isValid(person, cb),
+
+      cb => object
+        .properties({name: string})
+        .additionalProperties(string)
+        .isValid(person, (err) => {
+          err.should.be.instanceOf(Error);
+          err.path.should.eq('age');
+          return cb();
+        })
     ], done);
   });
 

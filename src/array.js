@@ -6,7 +6,7 @@ const {_uniq} = require('./utils');
 
 const array = createSchema('array', _.isArray);
 const isAsync = true;
-const defaults = true;
+// const defaults = true;
 
 _.each(
   {
@@ -21,7 +21,7 @@ _.each(
       )
     },
     items: {
-      isAsync, defaults,
+      isAsync, // defaults,
       validator: (value, items, callback) => {
         _.isArray(items) ?
           // Tuple validation
@@ -39,7 +39,7 @@ _.each(
       }
     },
     additionalItems: {
-      isAsync, defaults,
+      isAsync, // defaults,
       validator: function (value, subSchema, callback) {
         const items = this.get('items');
         if (!(items.length < value.length)) return callback(null, value);
@@ -47,7 +47,9 @@ _.each(
           _.takeRight(value, value.length - items.length),
           (element, i, cb) => subSchema.isValid(element, (error, result) => {
             let path = items.length + i;
-            if (error) return cb(new ValidationError(messages.additionalError, {path, value, error, subSchema}));
+            if (error) return cb(new ValidationError(messages.additionalError, {
+              type: 'object', keyword: 'additionalItems', path, value, error, subSchema
+            }));
             value[path] = result;
             return cb();
           }),
