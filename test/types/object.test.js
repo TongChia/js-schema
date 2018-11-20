@@ -133,7 +133,7 @@ describe('OBJECT SCHEMA TEST', () => {
         .properties({name: string})
         .additionalProperties(string)
         .isValid(person, (err) => {
-          err.should.be.instanceOf(Error);
+          err.should.instanceOf(Error);
           err.path.should.eq('age');
           return cb();
         })

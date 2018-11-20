@@ -23,6 +23,14 @@ describe('NUMERIC SCHEMA TEST', () => {
     });
   });
 
+  it('Enumerated values', (done) => {
+    number.enum([2018, 1984]).isValid(2000, (err) => {
+      err.should.instanceOf(Error);
+
+      number.enum(_.times(10, i => 1 + i)).isValid(8, done);
+    });
+  });
+
   it('Integer validate', (done) => {
     integer.isValid(float, (err) => {
       err.should.be.instanceOf(Error);

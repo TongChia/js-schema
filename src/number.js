@@ -4,6 +4,7 @@ const {createSchema} = require('./schema');
 const number = createSchema('number', _.isFinite);
 
 _.each({
+  enum   : _.flip(_.includes),
   maximum: _.lte,
   minimum: _.gte,
   exclusiveMaximum: _.lt,

@@ -23,6 +23,13 @@ describe('STRING SCHEMA TEST', () => {
     });
   });
 
+  it('Enumerated values', (done) => {
+    string.enum(['foo', 'bar']).isValid('foobar', (err) => {
+      err.should.instanceOf(Error);
+      string.enum(['foo', 'bar']).isValid('foo', done);
+    });
+  });
+
   it('String pattern validate', (done) => {
 
     $.parallel([

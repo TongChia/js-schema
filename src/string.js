@@ -6,11 +6,11 @@ const string = createSchema('string', _.isString);
 
 _.each(
   {
-    'enum':    (v, arr) => _.includes(arr, v),
+    enum     : _.flip(_.includes),
     minLength: (v, l) => v.length >= l,
     maxLength: (v, l) => v.length <= l,
-    pattern:   (v, r) => RegExp(...([].concat(r))).test(v),
-    format:    (v, f) => {
+    pattern  : (v, r) => RegExp(...([].concat(r))).test(v),
+    format   : (v, f) => {
       let [format, ...rest] = [].concat(f);
       if (_.has(formats, format))
         return formats[format](v, ...rest);

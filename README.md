@@ -66,10 +66,11 @@ VALIDATE
       - [x] hostname
       - [ ] uri, iri 
       - [ ] uri-template
-      - [ ] json
+      - [x] json
       - [ ] regex
     - [ ] String-Encoding Non-JSON Data
   - number (integer)
+    - [x] enum
     - [x] minimum, maximum
     - [x] exclusiveMinimum, exclusiveMaximum
     - [x] min, max (alias to `minimum, maximum, exclusiveMinimum, exclusiveMaximum`)
@@ -108,7 +109,7 @@ VALIDATE
   - [ ] description
   - [ ] default
   - [ ] examples
-- SubSchemas
+- Combining schemas
   - [ ] allOf
   - [ ] anyOf
   - [ ] oneOf
@@ -116,8 +117,8 @@ VALIDATE
 - [ ] Constant values
 - [ ] Enumerated values
 - json-schema
-  - [x] to json-schema
-  - [ ] from json schema
+  - [x] generate json-schema
+  - [ ] parse json-schema
 - referenced schema
   - [ ] $id ⚡️
   - [ ] $ref ⚡️
@@ -152,12 +153,8 @@ string.addValidate(
 
 #### TODO
 - [ ] custom validate;
-- [ ] function list;
-  - [ ] test report;
-  - [ ] automatic update;
-- [x] async validator (with callback);
-- [x] async validator (es2015);
-- [x] format validate;
+- [ ] test report;
+- [ ] automatic publish;
 - [ ] browser test;
 - [ ] toModel
   - [ ] MobX;

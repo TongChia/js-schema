@@ -5,6 +5,18 @@ const {ValidationError, messages} = require('./error');
 
 const version = '0.2';
 
+const store = {};
+
+// const schema = (...rest) => {
+//   rest = _.flatten(rest);
+//
+//   const [title, ...others] = rest;
+//
+//   if (_.isString(title)) {
+//     return _.get(store, rest[0]);
+//   }
+// };
+
 // TODO: ↓
 // const toSchema = function (schema) {
 //
@@ -39,6 +51,8 @@ function createSchema (type, checker) {
 
     toJSON, toString,
 
+    valueOf () {return this._},
+
     isTyped: checker || _.stubTrue,
 
     set (key, value) {
@@ -49,9 +63,21 @@ function createSchema (type, checker) {
       return _.get(this._, key);
     },
 
+    $title (title) {
+      if (!_.trim(title))
+        return new RangeError('title');
+      if (_.has(store, title))
+        return new Error('');
+
+      this._.title = title;
+      store[title] = this;
+
+      return this;
+    },
+
     isValid (value, callback) {
       if (!callback && !_.eq(typeof Promise, 'undefined'))
-        return new Promise((resolve, reject) => this.isValid(value, (err) => err ? reject(err) : resolve(value)));
+        return new Promise((resolve, reject) => this.isValid(value, (err, result) => err ? reject(err) : resolve(result)));
 
       if (!this.isTyped(value))
         return callback(new ValidationError(messages.typeError, {type, value, errorType: 'TypeError'}), value);
