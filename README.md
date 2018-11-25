@@ -77,7 +77,7 @@ VALIDATE
     - [x] hostname
     - [ ] uri, iri 
     - [ ] uri-template
-    - [ ] regex
+    - [x] regexp ([slevithan/xregexp](https://github.com/slevithan/xregexp))
   - [ ] String-Encoding Non-JSON Data
 - number (integer)
   - [x] enum

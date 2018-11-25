@@ -43,6 +43,7 @@
     "async": "^2.6.1",
     "lodash": "^4.17.11",
     "param-case": "^2.1.1",
-    "validator": "^10.9.0"
+    "validator": "^10.9.0",
+    "xregexp": "^4.2.0"
   }
 }
