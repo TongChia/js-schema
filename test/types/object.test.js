@@ -3,7 +3,7 @@ const should = chai.should();
 const faker = require('faker');
 const _ = require('lodash');
 const $ = require('async');
-const {object, number, string} = require('../../src');
+const {object, number, string, nil} = require('../../src');
 
 describe('OBJECT SCHEMA TEST', () => {
 
@@ -121,6 +121,28 @@ describe('OBJECT SCHEMA TEST', () => {
     ], done);
   });
 
+  it('Pattern properties', (done) => {
+
+    $.series([
+
+      cb => object.patternProperties({
+        '^\\$[^$]+': string,
+        '^\\_[^_]+': number,
+      }).isValid({$foo: 'bar', _baz: 1}, cb),
+
+      cb => object.properties({
+        _foo: string
+      }).patternProperties({
+        '^\\_[^_]+': number,
+      }).isValid({_foo: 'bar'}, (err) => {
+        err.should.instanceOf(Error);
+        return cb();
+      }),
+
+    ], done);
+
+  });
+
   it('Additional properties', (done) => {
 
     $.series([
@@ -136,7 +158,18 @@ describe('OBJECT SCHEMA TEST', () => {
           err.should.instanceOf(Error);
           err.path.should.eq('age');
           return cb();
-        })
+        }),
+
+      cb => object.properties({
+        id: number,
+      }).patternProperties({
+        '^S_': string
+      }).additionalProperties(nil).isValid({
+        id: 1,
+        S_01: 'foo bar',
+        keyword: null
+      }, cb)
+
     ], done);
   });
 

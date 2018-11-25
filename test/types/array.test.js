@@ -9,7 +9,7 @@ describe('ARRAY SCHEMA TEST', () => {
   
   let nums = _.times(10, i => 1 + i); // [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
   let strs = _.times(_.random(1, 10), () => faker.name.findName());
-  let list = [2018, 'foo', 31, null, 'bar'];
+  let items = [2018, 'foo', 31, null, 'bar'];
 
   it('Array types validate', (done) => {
     array.isValid(strs, (err, val) => {
@@ -41,7 +41,7 @@ describe('ARRAY SCHEMA TEST', () => {
     array.contains(nil).isValid(strs, (err) => {
       err.should.be.instanceOf(Error);
 
-      array.contains(nil).isValid(list, (err) => {
+      array.contains(nil).isValid(items, (err) => {
         should.not.exist(err);
 
         return done();
@@ -54,30 +54,29 @@ describe('ARRAY SCHEMA TEST', () => {
     let tuple = array.items([number, string, number, nil]);
 
     series([
-      (cb) => lists.isValid(nums, (err) => {
-        should.not.exist(err);
-        return cb();
-      }),
+      (cb) => lists.isValid([], cb),
+      (cb) => lists.isValid(nums, cb),
 
       (cb) => lists.isValid(nums.concat(11), (err) => {
         err.should.be.instanceOf(Error);
         return cb();
       }),
 
-      (cb) => tuple.isValid(list, (err) => {
+      (cb) => tuple.isValid([], cb),
+      (cb) => tuple.isValid([1], cb),
+      (cb) => tuple.isValid(_.take(items, 3), cb),
+
+      (cb) => tuple.isValid(items, (err) => {
         should.not.exist(err);
         return cb();
       }),
 
-      (cb) => tuple.maxItems(4).isValid(list, (err) => {
+      (cb) => tuple.maxItems(4).isValid(items, (err) => {
         err.should.be.instanceOf(Error);
         return cb();
       }),
 
-      (cb) => tuple.minItems(5).isValid(list, (err) => {
-        should.not.exist(err);
-        return cb();
-      })
+      (cb) => tuple.minItems(5).isValid(items, cb)
     ], done);
 
   });

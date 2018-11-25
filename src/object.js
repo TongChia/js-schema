@@ -15,8 +15,7 @@ _.each(
     minProperties: (obj, n) => _.size(obj) >= n,
     maxProperties: (obj, n) => _.size(obj) <= n,
     properties: {
-      isAsync,
-      validator: (value, props, callback) =>
+      isAsync, validator: (value, props, callback) =>
         $.each(_keys(value, props),
           (path, cb) => props[path].isValid(value[path], (error, result) => {
             if (error) return cb(new ValidationError(messages.propertyError, {
@@ -28,12 +27,32 @@ _.each(
           callback
         )
     },
+    patternProperties: {
+      isAsync, validator: (value, patternProps, callback) => {
+        const keys = _.keys(value), patterns = _.keys(patternProps), entries = [];
+        _.each(patterns, (pattern) => _.each(keys, path => {
+          if (RegExp(pattern).test(path)) entries.push([path, pattern]);
+        }));
+        $.each(entries, ([path, pattern], cb) => patternProps[pattern].isValid(value[path], (error, result) => {
+          if (error) return cb(new ValidationError(messages.propertyError, {
+            type, keyword: 'patternProperties', path: pattern, value, error, subSchema: patternProps[pattern]
+          }));
+          value[path] = result;
+          return cb();
+        }), callback);
+      }
+    },
     additionalProperties: {
-      isAsync,
-      validator: function (value, subSchema, callback) {
+      isAsync, validator: function (value, subSchema, callback) {
         const keyword = 'additionalProperties';
-        const props = this.get('properties');
-        return $.each(_.pullAll(_.keys(value), _.keys(props)),
+        const props = this.get('properties'), patternProps = this.get('patternProperties');
+        let additional = _.pullAll(_.keys(value), _.keys(props));
+        if (patternProps) {
+          const patterns = _.keys(patternProps);
+          const matched = _.filter(_.keys(value), key => _.some(patterns, pattern => RegExp(pattern).test(key)));
+          additional = _.pullAll(additional, matched);
+        }
+        return $.each(additional,
           (path, cb) => subSchema.isValid(value[path], (error, result) => {
             if (error) return cb(new ValidationError(messages.additionalError, {
               type, keyword, path, value, error, subSchema

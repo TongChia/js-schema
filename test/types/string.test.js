@@ -1,10 +1,13 @@
 const chai = require('chai');
+const promised = require('chai-as-promised');
 const faker = require('faker');
 const should = chai.should();
 const _ = require('lodash');
 const $ = require('async');
 const {string} = require('../../src/string');
 const {err} = require('../../src/error');
+
+chai.use(promised);
 
 describe('STRING SCHEMA TEST', () => {
 
@@ -30,19 +33,27 @@ describe('STRING SCHEMA TEST', () => {
     });
   });
 
-  it('String pattern validate', (done) => {
+  it('String pattern (and regexp)', (done) => {
 
     $.parallel([
-      (cb) => string.pattern('foo').isValid('bar', (err) => {
-        err.should.be.instanceOf(Error);
-        return cb();
-      }),
-
-      (cb) => string.pattern(/foo/).isValid('foobar', cb),
 
       (cb) => string.pattern('^foo$').isValid('foo', cb),
 
-      (cb) => string.pattern(['^foo$', 'i']).isValid('Foo', cb),
+      (cb) => string.pattern('foo', err`foo is foobar's foo`).isValid('Foo', (err) => {
+        err.should.instanceOf(Error);
+        err.message.should.eq('foo is foobar\'s foo');
+        return cb();
+      }),
+
+      // flags
+      (cb) => string.regexp('^foo$', 'i').isValid('Foo', cb),
+
+      // RegExp instance
+      (cb) => string.regexp(/^foo$/i).isValid('Foo', cb),
+
+      // XRegExp
+      // `source` & `flags`
+      (cb) => string.regexp({source: '^\\pS$', flags: 'A'}).isValid('💩', cb),
 
     ], done);
 
@@ -99,25 +110,29 @@ describe('STRING SCHEMA TEST', () => {
       const result = await string.format('email').isValid(email);
       result.should.equal(email);
 
-      try {
-        await string.format('email').isValid('foobar');
-      } catch (err) {
-        err.should.instanceOf(Error);
-      }
+      await string.format('email').isValid('foobar').should.be.rejectedWith(Error);
     });
 
     it('IP', async () => {
-      const ip = faker.internet.ip(4);
-      const ipv4Schema = string.format(['ip', 4], err`\`{value}\` should be an ipv4 address.`);
-      const result = await ipv4Schema.isValid(ip);
-      result.should.equal(ip);
+      const ip4 = faker.internet.ip();
+      const ip6 = faker.internet.ipv6();
+      const ipv4Schema = string.format('ipv4', err`\`{value}\` should be an ipv4 address.`);
 
-      try {
-        await ipv4Schema.isValid('foobar');
-      } catch (err) {
-        err.should.instanceOf(Error);
-        err.message.should.equal('`foobar` should be an ipv4 address.');
-      }
+      await ipv4Schema.isValid(ip4).should.become(ip4);
+      await string.format('ipv6').isValid(ip6).should.become(ip6);
+
+      // format `ip` cloud validate ipv4 & ipv6 address
+      await string.format('ip').isValid(ip4).should.become(ip4);
+      await string.format('ip').isValid(ip6).should.become(ip6);
+
+      await ipv4Schema.isValid(ip6).should.be.rejectedWith('`' + ip6 + '` should be an ipv4 address.');
+      await string.format('ip', '6').isValid(ip6).should.become(ip6);
+      await string.format('ip', '4').isValid(ip4).should.become(ip4);
+      await string.format('ip', '4').isValid(ip6).should.be.rejectedWith(Error);
+
+      // multiple parameters with error message.
+      await string.format('ip', '4', err`ip format should be ipv4.`)
+        .isValid(ip6).should.be.rejectedWith('ip format should be ipv4.');
     });
 
   });

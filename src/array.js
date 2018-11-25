@@ -10,7 +10,7 @@ const isAsync = true;
 
 _.each(
   {
-    unique:   (arr, y = true) => !y || _uniq(arr),
+    uniqueItems: (arr, y = true) => !y || _uniq(arr),
     minItems: (arr, l) => arr.length >= l,
     maxItems: (arr, l) => arr.length <= l,
     contains: {
@@ -22,21 +22,18 @@ _.each(
     },
     items: {
       isAsync, // defaults,
-      validator: (value, items, callback) => {
-        _.isArray(items) ?
-          // Tuple validation
-          $.eachOf(items, (subSchema, path, cb) => subSchema.isValid(value[path], (error, result) => {
+      validator: (value, items, callback) => _.isArray(items) ?
+        // Tuple validation
+        $.eachOf(_.take(items, value.length),(subSchema, path, cb) =>
+          subSchema.isValid(value[path], (error, result) => {
             if (error) return cb(new ValidationError(messages.itemError, {path, value, error, subSchema}));
             value[path] = result;
             return cb();
           }), callback) :
-          // List validation
-          $.eachOf(value, (element, path, cb) => items.isValid(element, (error, result) => {
-            if (error) return cb(new ValidationError(messages.listError, {path, value, error, subSchema: items}));
-            value[path] = result;
-            return cb();
-          }), callback);
-      }
+        // List validation
+        $.mapValues(value, (element, path, cb) => items.isValid(element, (error, result) =>
+          cb( error ? new ValidationError(messages.listError, {path, value, error, subSchema: items}) : null, result)
+        ), callback)
     },
     additionalItems: {
       isAsync, // defaults,
@@ -48,7 +45,7 @@ _.each(
           (element, i, cb) => subSchema.isValid(element, (error, result) => {
             let path = items.length + i;
             if (error) return cb(new ValidationError(messages.additionalError, {
-              type: 'object', keyword: 'additionalItems', path, value, error, subSchema
+              type: 'array', keyword: 'additionalItems', path, value, error, subSchema
             }));
             value[path] = result;
             return cb();
@@ -60,6 +57,10 @@ _.each(
   },
   (validate, keyword) => array.addValidate(keyword, validate)
 );
+
+array.superMethod('unique', function (y) {
+  return this.uniqueItems(y);
+});
 
 module.exports = {
   array,

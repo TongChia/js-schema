@@ -1,6 +1,9 @@
 JS-SCHEMA
 =========
-[![Build Status](https://travis-ci.org/TongChia/js-schema.svg?branch=master)](https://travis-ci.org/TongChia/js-schema)  
+[![Build Status](https://travis-ci.org/TongChia/js-schema.svg?branch=master)](https://travis-ci.org/TongChia/js-schema) 
+[![npm](https://img.shields.io/npm/v/@tongchia/jsschema.svg)](https://www.npmjs.com/package/@tongchia/jsschema) 
+[![NpmLicense](https://img.shields.io/npm/l/@tongchia/jsschema.svg)](https://www.npmjs.com/package/@tongchia/jsschema) 
+
 JS Schema validation library, compatible with `json-schema`.  
 But not fully complying with `json-schema`,
 the goal is to do data protection between the front, back end and database or micro services;
@@ -33,9 +36,9 @@ const person = object
       publication_date: string.format('date')
     })),
     loggedIn: object.properties({
-      ip   : string.format('ip'), // include ipv4 & ipv6
-      oauth: string.enum(['facebook', 'github']),
-      date : date.default(Date.now)
+      ip    : string.format('ip'), // include ipv4 & ipv6
+      oauth : string.enum(['facebook', 'github']),
+      date  : date.default(Date.now)
     })
   })
   .required(['name', 'age', 'birthday']);
@@ -52,58 +55,66 @@ person.isValid({
 VALIDATE
 ---
 
-- Types
-  - string
-    - [x] enum
-    - [x] pattern
-    - [x] minLength
-    - [x] maxLength
-    - [x] format
-      - [x] \* from `chriso/validator.js` ✨
-      - [x] data-time (full-date, full-time)
-      - [x] ipv4, ipv6
-      - [x] email
-      - [x] hostname
-      - [ ] uri, iri 
-      - [ ] uri-template
-      - [x] json
-      - [ ] regex
-    - [ ] String-Encoding Non-JSON Data
-  - number (integer)
-    - [x] enum
-    - [x] minimum, maximum
-    - [x] exclusiveMinimum, exclusiveMaximum
-    - [x] min, max (alias to `minimum, maximum, exclusiveMinimum, exclusiveMaximum`)
-    - [x] range (alias to `min, max`)
-    - [x] integer
-    - [x] multipleOf
-    - [ ] converter (`numeric`)
-  - date
-    - [x] after
-    - [x] before
-    - [ ] converter (`date-time`, `full-date`, `date-string`, `time-stamp`)
-  - array
-    - [x] minItems
-    - [x] maxItems
-    - [x] unique
-    - [x] items
-    - [x] additionalItems
-    - [x] contains
-    - [ ] entries ✨
-    - [ ] Overload function ✨
-  - object
-    - [x] properties
-    - [x] required
-    - [x] additionalProperties
-    - [x] dependencies
-      - [ ] schema dependencies
-    - [ ] propertyNames
-    - [x] size
-    - [ ] patternProperties
-  - [x] null (nil)
-  - [x] boolean
-  - buffer
-    - [ ] converter (`strings`, `base64`)
+- string
+  - [x] enum
+  - [x] pattern
+  - [x] minLength
+  - [x] maxLength
+  - [x] format
+    - [x] \* from [chriso/validator.js](https://github.com/chriso/validator.js) ✨
+      - `alpha`
+      - `email`
+      - `url`
+      - `base64`
+      - `hex-color`
+      - `md5`
+      - `mongo-id`
+      - `uuid`
+      - `ip` (`ipv4`, `ipv6`)
+      - `json`
+      - ...
+    - [x] data-time (full-date, full-time)
+    - [x] hostname
+    - [ ] uri, iri 
+    - [ ] uri-template
+    - [ ] regex
+  - [ ] String-Encoding Non-JSON Data
+- number (integer)
+  - [x] enum
+  - [x] minimum, maximum
+  - [x] exclusiveMinimum, exclusiveMaximum
+  - [x] min, max (alias to `minimum, maximum, exclusiveMinimum, exclusiveMaximum`)
+  - [x] range (alias to `min, max`)
+  - [x] integer
+  - [x] multipleOf
+  - [ ] converter (`numeric`)
+- date
+  - [x] after
+  - [x] before
+  - [ ] converter (`date-time`, `full-date`, `date-string`, `time-stamp`)
+- array
+  - [x] minItems
+  - [x] maxItems
+  - [x] unique (`uniqueItems`)
+  - [x] items
+  - [x] additionalItems
+  - [x] contains
+  - [ ] entries ✨
+  - [ ] Overload function ✨
+- object
+  - [x] properties
+  - [x] required
+  - [x] patternProperties
+  - [x] additionalProperties
+  - [x] size (`minProperties`, `maxProperties`)
+  - [x] dependencies
+    - [ ] schema dependencies
+  - [ ] propertyNames
+- [x] null (nil)
+- [x] boolean
+- buffer
+  - [ ] converter (`strings`, `base64`)
+- function
 - Metadata
   - [ ] title
   - [ ] description
