@@ -3,9 +3,10 @@ const {createSchema, toJSON} = require('./schema');
 
 const none = createSchema('none', _.stubFalse);
 
-none.superMethod('toJSON', function () {
-  let {type, $js_schema, ...json} = toJSON.call(this);
-  return {...json, $js_schema: {...$js_schema, type}, not: true};
+none.proto('toJSON', function () {
+  if (this.original) return false;
+  let {type, ...json} = toJSON.call(this);
+  return {...json, _type: type, not: true};
 });
 
 module.exports = {none};

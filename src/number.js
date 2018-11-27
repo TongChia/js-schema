@@ -22,7 +22,7 @@ _.each({
   range: function (min, max, ...rest) {
     return this.min(min, ...rest).max(max, ...rest);
   }
-}, (method, keyword) => number.superMethod(keyword, method));
+}, (method, keyword) => number.proto(keyword, method));
 
 module.exports = {
   number,

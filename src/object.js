@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const $ = require('async');
 const {_keys} = require('./utils');
-const {createSchema} = require('./schema');
+const {createSchema, $schema} = require('./schema');
 const {ValidationError, messages} = require('./error');
 
 const type = 'object';
@@ -19,7 +19,7 @@ _.each(
         $.each(_keys(value, props),
           (path, cb) => props[path].isValid(value[path], (error, result) => {
             if (error) return cb(new ValidationError(messages.propertyError, {
-              type, keyword: 'properties', path, value, error, subSchema: props[path]
+              type, keyword: 'properties', path, value, error, schema: props[path]
             }));
             value[path] = result;
             return cb();
@@ -35,7 +35,7 @@ _.each(
         }));
         $.each(entries, ([path, pattern], cb) => patternProps[pattern].isValid(value[path], (error, result) => {
           if (error) return cb(new ValidationError(messages.propertyError, {
-            type, keyword: 'patternProperties', path: pattern, value, error, subSchema: patternProps[pattern]
+            type, keyword: 'patternProperties', path: pattern, value, error, schema: patternProps[pattern]
           }));
           value[path] = result;
           return cb();
@@ -68,7 +68,7 @@ _.each(
   (validate, keyword) => object.addValidate(keyword, validate)
 );
 
-object.superMethod('size', function (min, max, ...rest) {
+object.proto('size', function (min, max, ...rest) {
   let result;
   if (min > 0)
     result = this.minProperties(min, ...rest);
@@ -77,6 +77,12 @@ object.superMethod('size', function (min, max, ...rest) {
   return result;
 });
 
+_.each(['properties', 'patternProperties'], key =>
+  object.hook(key, function (old, params, message) {
+    return old(_.mapValues(params, $schema), message);
+  }));
+
 module.exports = {
-  object
+  object,
+  Obj: object.properties
 };

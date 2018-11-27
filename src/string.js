@@ -18,7 +18,7 @@ _.each(
   (validate, keyword) => string.addValidate(keyword, validate)
 );
 
-string.superMethod('regexp',function (regex, flags, message) {
+string.proto('regexp',function (regex, flags, message) {
   if (flags && !(/^[nsxAgimuy]+$/).test(flags)) {message = flags; flags = ''}
   let {source = regex, flags : fl = flags} = (regex.xregexp || regex);
   let schema = new string.class({...this._, regexp: [source, fl]});
@@ -26,7 +26,7 @@ string.superMethod('regexp',function (regex, flags, message) {
   return schema;
 });
 
-string.superMethod('format', function (format, ...rest) {
+string.proto('format', function (format, ...rest) {
   if (!_.has(formats, format))
     throw RangeError(
       'Invalid format `' + format + '`, see ' +

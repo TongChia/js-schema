@@ -20,11 +20,11 @@ _.each(
   })
 );
 
-date.superMethod('range', function (af, bf) {
+date.proto('range', function (af, bf) {
   return this.after(af).before(bf);
 });
 
-date.superMethod('toJSON', function () {
+date.proto('toJSON', function () {
   let {type, $js_schema, ...json} = toJSON.call(this);
   return {...json, $js_schema: {...$js_schema, type}, type: 'string', format: 'date-time'};
 });

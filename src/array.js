@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const $ = require('async');
-const {createSchema} = require('./schema');
+const {createSchema, $schema} = require('./schema');
 const {ValidationError, messages} = require('./error');
 const {_uniq} = require('./utils');
 
@@ -14,38 +14,30 @@ _.each(
     minItems: (arr, l) => arr.length >= l,
     maxItems: (arr, l) => arr.length <= l,
     contains: {
-      isAsync,
-      validator: (value, schema, callback) => $.someSeries(value,
+      isAsync, validator: (value, schema, callback) => $.someSeries(value,
         (item, cb) => schema.isValid(item, (invalid) => cb(null, _.isNil(invalid))),
-        (err, valid) => callback(valid ? null : ValidationError(messages.containsError, {value}), value)
+        (err, valid) => callback(valid ? null : ValidationError(messages.containsError, {schema}), value)
       )
     },
     items: {
-      isAsync, // defaults,
-      validator: (value, items, callback) => _.isArray(items) ?
-        // Tuple validation
-        $.eachOf(_.take(items, value.length),(subSchema, path, cb) =>
-          subSchema.isValid(value[path], (error, result) => {
-            if (error) return cb(new ValidationError(messages.itemError, {path, value, error, subSchema}));
+      isAsync, validator: (value, items, callback) =>
+        $.times(_([value, items]).map('length').min(), (path, cb, schema) =>
+          (schema = _.isArray(items) ? items[path] : items).isValid(value[path], (error, result) => {
+            if (error) return cb(new ValidationError(messages.itemError, {path, value, error, schema}));
             value[path] = result;
             return cb();
-          }), callback) :
-        // List validation
-        $.mapValues(value, (element, path, cb) => items.isValid(element, (error, result) =>
-          cb( error ? new ValidationError(messages.listError, {path, value, error, subSchema: items}) : null, result)
-        ), callback)
+          }), callback)
     },
     additionalItems: {
-      isAsync, // defaults,
-      validator: function (value, subSchema, callback) {
+      isAsync, validator: function (value, schema, callback) {
         const items = this.get('items');
         if (!(items.length < value.length)) return callback(null, value);
         return $.eachOf(
           _.takeRight(value, value.length - items.length),
-          (element, i, cb) => subSchema.isValid(element, (error, result) => {
+          (element, i, cb) => schema.isValid(element, (error, result) => {
             let path = items.length + i;
             if (error) return cb(new ValidationError(messages.additionalError, {
-              type: 'array', keyword: 'additionalItems', path, value, error, subSchema
+              type: 'array', keyword: 'additionalItems', path, value, error, schema
             }));
             value[path] = result;
             return cb();
@@ -58,9 +50,13 @@ _.each(
   (validate, keyword) => array.addValidate(keyword, validate)
 );
 
-array.superMethod('unique', function (y) {
-  return this.uniqueItems(y);
+array.proto('unique', function (y, msg) {
+  return this.uniqueItems(y, msg);
 });
+
+// array.hook('items', function (items, params, message) {
+//   return items($schema(params), message);
+// });
 
 module.exports = {
   array,

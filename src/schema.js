@@ -5,18 +5,15 @@ const {ValidationError, messages} = require('./error');
 
 const version = '0.2';
 
-// const schemas = {};
-// const instances = {};
+const stores = new Map;
 
-// const schema = (...rest) => {
-//   rest = _.flatten(rest);
-//
-//   const [title, ...others] = rest;
-//
-//   if (_.isString(title)) {
-//     return _.get(store, rest[0]);
-//   }
-// };
+const $schema = (s) =>
+  s.isSchema ? s :
+    s === true ? stores.get('*') :
+      s === false ? stores.get('none') :
+        _.isPlainObject(s) ? stores.get('object').properties(s) :
+          _.isArray(s) ? stores.get('array').items(s.length > 1 ? s : s[0]) :
+            s;
 
 // TODO: ↓
 // const toSchema = function (schema) {
@@ -26,7 +23,7 @@ const version = '0.2';
 const toJSON = function () {
   return {
     $schema: 'http://json-schema.org/draft-07/schema#',
-    $js_schema: {version},
+    $js_schema: version,
     ...this._,
   };
 };
@@ -62,7 +59,9 @@ function createSchema (type, checker) {
 
   Schema.validates = {};
 
-  _.merge(Schema.prototype, {
+  const proto = _.assign(Schema.prototype, {
+    isSchema: true,
+
     class: Schema,
 
     toJSON, toString,
@@ -103,7 +102,7 @@ function createSchema (type, checker) {
       if (!this.isTyped(value))
         return callback(new ValidationError(messages.typeError, {type, value, errorType: 'TypeError'}), value);
 
-      $.each(_keys(Schema.validates, this._), (keyword, cb) => {
+      return $.each(_keys(Schema.validates, this._), (keyword, cb) => {
         const params = this._[keyword], {isAsync, validator, message} = Schema.validates[keyword];
 
         if (isAsync) return validator.call(this, value, params, cb);
@@ -124,17 +123,24 @@ function createSchema (type, checker) {
   let schema = _.assign(new Schema({type}), {
     original: true,
 
-    superMethod (prop, method) {
-      // if (arguments.length === 1) return this.prototype[prop];
-      Schema.prototype[prop] = method;
+    proto (prop, method) {
+      if (arguments.length === 1) return proto[prop];
+      proto[prop] = method;
       return this;
     },
 
+    hook (prop, fn) {
+      const old = this.proto(prop);
+      return this.proto(prop, function (...rest) {
+        return fn.call(this, _.bind(old, this), ...rest);
+      });
+    },
+
     addKeyword (keyword, defaults) {
-      let def = _.clone(defaults);
-      return this.superMethod(keyword, function (params, message) {
-        let schema = new Schema({...this._, [keyword]: _.defaultTo(params, def)});
-        if (message) _.set(schema._,['errorMessage', keyword], message);
+      const def = _.clone(defaults);
+      return this.proto(keyword, function (params, message) {
+        const schema = new Schema({...this._, [keyword]: _.defaultTo(params, def)});
+        if (message) _.set(schema._, ['errorMessage', keyword], message);
         return schema;
       });
     },
@@ -148,10 +154,14 @@ function createSchema (type, checker) {
 
   _.each(['title', 'description', 'examples', 'default'], (k) => schema.addKeyword(k));
 
+  stores.set(type, schema);
+
   return schema;
 }
 
 module.exports = {
+  stores,
+  $schema,
   createSchema,
   toJSON,
 };
