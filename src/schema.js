@@ -8,12 +8,11 @@ const version = '0.2';
 const stores = new Map;
 
 const $schema = (s) =>
-  s.isSchema ? s :
-    s === true ? stores.get('*') :
-      s === false ? stores.get('none') :
-        _.isPlainObject(s) ? stores.get('object').properties(s) :
-          _.isArray(s) ? stores.get('array').items(s.length > 1 ? s : s[0]) :
-            s;
+  s === true ? stores.get('any') :
+    s === false ? stores.get('none') :
+      _.isObject(s) ? s.isSchema ? s : stores.get('object').properties(s) :
+        _.isArray(s) ? stores.get('array').items(s.length > 1 ? s : s[0]) :
+          s;
 
 // TODO: ↓
 // const toSchema = function (schema) {
@@ -31,10 +30,9 @@ const toJSON = function () {
 const toString = function () {
   let keys = _.pull(_.keys(this._), 'type');
   return 'schema:' + this._.type + (keys.length ? '.' : '') +
-    keys.splice(0, 3).map(k => (k + '(' +
-      (_.isObjectLike(this._[k]) ? '...' : this._[k]) +
-      ')')).join('.') +
-    (keys.length ? '...' : '') ;
+    keys.splice(0, 3).map(k => (
+      k + '(' + (_.isArray(this._[k]) ? '[...]' : _.isObject(this._[k]) ? '{...}' : this._[k]) + ')'
+    )).join('.') + (keys.length ? '...' : '') ;
 };
 
 /**

@@ -54,9 +54,10 @@ array.proto('unique', function (y, msg) {
   return this.uniqueItems(y, msg);
 });
 
-// array.hook('items', function (items, params, message) {
-//   return items($schema(params), message);
-// });
+array.hook('items', function (items, params, message, ...rest) {
+  if (message === true) return items(params, ...rest);
+  return items(params.length > 1 ? params : $schema(params), message, ...rest);
+});
 
 module.exports = {
   array,

@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const {createSchema, toJSON} = require('./schema');
 
-const any = createSchema('*', _.stubTrue);
+const any = createSchema('any', _.stubTrue);
 
 any.proto('toJSON', function () {
   if (this.original) return true;

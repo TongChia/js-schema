@@ -25,11 +25,11 @@ date.proto('range', function (af, bf) {
 });
 
 date.proto('toJSON', function () {
-  let {type, $js_schema, ...json} = toJSON.call(this);
-  return {...json, $js_schema: {...$js_schema, type}, type: 'string', format: 'date-time'};
+  let {type, ...json} = toJSON.call(this);
+  return {...json, _type: type, type: 'string', format: 'date-time'};
 });
 
-date.addKeyword('accept', 'date-time');
+// date.addKeyword('accept', 'date-time');
 
 // const isValid = date.class.prototype.isValid;
 // date.superMethod('isValid',
