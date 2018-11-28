@@ -53,23 +53,25 @@ describe('ARRAY SCHEMA TEST', () => {
     let lists = array.items(number.max(10, true));
     let tuple = array.items([number, string, number, nil]);
 
+    let shouldError = (cb) => (err) => {
+      err.should.be.instanceOf(Error);
+      return cb();
+    };
+
     series([
       (cb) => lists.isValid([], cb),
       (cb) => lists.isValid(nums, cb),
 
-      (cb) => lists.isValid(nums.concat(11), (err) => {
-        err.should.be.instanceOf(Error);
-        return cb();
-      }),
+      (cb) => lists.isValid(nums.concat(11), shouldError(cb)),
 
       (cb) => tuple.isValid([], cb),
       (cb) => tuple.isValid([1], cb),
       (cb) => tuple.isValid(_.take(items, 3), cb),
+      (cb) => tuple.isValid(items, cb),
 
-      (cb) => tuple.isValid(items, (err) => {
-        should.not.exist(err);
-        return cb();
-      }),
+      (cb) => tuple.isValid(['foo'], shouldError(cb)),
+      (cb) => tuple.isValid([1, 2], shouldError(cb)),
+      (cb) => tuple.isValid([1, 'foo', 2, 'bar'], shouldError(cb)),
 
       (cb) => tuple.maxItems(4).isValid(items, (err) => {
         err.should.be.instanceOf(Error);
@@ -78,6 +80,10 @@ describe('ARRAY SCHEMA TEST', () => {
 
       (cb) => tuple.minItems(5).isValid(items, cb)
     ], done);
+
+  });
+
+  it('Items size', (done) => {
 
   });
 

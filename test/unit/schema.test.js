@@ -5,7 +5,7 @@ const _ = require('lodash');
 const $ = require('async');
 const {object, number, string, array, date, boolean, buffer, any} = require('../../src');
 
-describe('ARRAY SCHEMA TEST', () => {
+describe('MONGOOSE LIKE SCHEMA', () => {
 
 
   it('should valid', (done) => {
@@ -30,11 +30,7 @@ describe('ARRAY SCHEMA TEST', () => {
       ofObjectId: [string.format('mongo-id')],
 
       ofArrays :  [[]],
-      _ofArrays:  array.items(array.items(any)),
-
       ofArrayOfNumbers : [[number]],
-      _ofArrayOfNumbers: array.items(array.items(number)),
-      $ofArrayOfNumbers: array.items([number]),
 
       ofObject:   [{
 
@@ -56,13 +52,28 @@ describe('ARRAY SCHEMA TEST', () => {
 
     }).isValid({
 
-      name: 'tongChia',
-      binary: new Buffer([]),
-      living: true,
-      updated: new Date(),
-      ofString: ['foo', 'bar'],
-      ofObject: [],
-      nested: {
+      name     : 'tongChia',
+      binary   : new Buffer([]),
+      living   : true,
+      updated  : new Date(),
+      age      : 30,
+      mixed    : {foo: 'bar'},
+      _someId  : '5349b4ddd2781d08c09890f3',
+
+      array    : [1, 'x', null],
+      ofString : ['foo', 'bar'],
+      ofMixed  : [{foo: 'bar'}, new Date(), 123, '456'],
+      ofObjectId: [],
+
+      ofArrays : [[], [{}], [null, 1], ['foo', 'bar', 'baz']],
+      ofArrayOfNumbers: [[1, 23], [8, 8, 9], [0]],
+
+      ofObject : [{
+        title   : 'hello js-schema',
+        address : ['chongqing', 'china'],
+        No      : 2088
+      }],
+      nested   : {
         stuff: 'foo bar'
       }
 

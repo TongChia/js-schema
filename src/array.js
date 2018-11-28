@@ -2,11 +2,11 @@ const _ = require('lodash');
 const $ = require('async');
 const {createSchema, $schema} = require('./schema');
 const {ValidationError, messages} = require('./error');
-const {_uniq} = require('./utils');
+const {_uniq, iteratee} = require('./utils');
+const {any} = require('./any');
 
 const array = createSchema('array', _.isArray);
 const isAsync = true;
-// const defaults = true;
 
 _.each(
   {
@@ -21,29 +21,16 @@ _.each(
     },
     items: {
       isAsync, validator: (value, items, callback) =>
-        $.times(_([value, items]).map('length').min(), (path, cb, schema) =>
-          (schema = _.isArray(items) ? items[path] : items).isValid(value[path], (error, result) => {
-            if (error) return cb(new ValidationError(messages.itemError, {path, value, error, schema}));
-            value[path] = result;
-            return cb();
-          }), callback)
+        $.times(_([value, items]).map('length').min(), (i, cb) =>
+          iteratee(_.isArray(items) ? items[i] : items, value, i, 'array', 'items', cb), callback)
     },
     additionalItems: {
       isAsync, validator: function (value, schema, callback) {
-        const items = this.get('items');
-        if (!(items.length < value.length)) return callback(null, value);
-        return $.eachOf(
-          _.takeRight(value, value.length - items.length),
-          (element, i, cb) => schema.isValid(element, (error, result) => {
-            let path = items.length + i;
-            if (error) return cb(new ValidationError(messages.additionalError, {
-              type: 'array', keyword: 'additionalItems', path, value, error, schema
-            }));
-            value[path] = result;
-            return cb();
-          }),
-          callback
-        );
+        const int = this.get('items.length');
+        if (!(int < value.length)) return callback(null, value);
+        //! ↑ also checked `items` is not `array`;
+        return $.times(value.length - int, (n, cb) =>
+          iteratee(schema, value, int + n, 'array', 'additionalItems', cb), callback);
       }
     }
   },
@@ -54,7 +41,7 @@ array.proto('unique', function (y, msg) {
   return this.uniqueItems(y, msg);
 });
 
-array.hook('items', function (items, params, message, ...rest) {
+array.hook('items', function (items, params = any, message, ...rest) {
   if (message === true) return items(params, ...rest);
   return items(params.length > 1 ? params : $schema(params), message, ...rest);
 });

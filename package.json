@@ -28,9 +28,9 @@
   "homepage": "https://github.com/TongChia/js-schema#readme",
   "devDependencies": {
     "@babel/cli": "^7.1.5",
-    "@babel/core": "^7.1.5",
+    "@babel/core": "^7.1.6",
     "@babel/polyfill": "^7.0.0",
-    "@babel/preset-env": "^7.1.5",
+    "@babel/preset-env": "^7.1.6",
     "@babel/register": "^7.0.0",
     "babel-eslint": "^8.2.6",
     "chai": "^4.2.0",
@@ -43,7 +43,6 @@
     "async": "^2.6.1",
     "lodash": "^4.17.11",
     "param-case": "^2.1.1",
-    "validator": "^10.9.0",
-    "xregexp": "^4.2.0"
+    "validator": "^10.9.0"
   }
 }

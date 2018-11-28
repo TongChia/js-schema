@@ -116,10 +116,10 @@ VALIDATE
   - [ ] converter (`strings`, `base64`)
 - function
 - Metadata
-  - [ ] title
-  - [ ] description
-  - [ ] default
-  - [ ] examples
+  - [x] title
+  - [x] description
+  - [x] default
+  - [x] examples
 - Combining schemas
   - [ ] allOf
   - [ ] anyOf

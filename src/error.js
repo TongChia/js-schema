@@ -3,11 +3,8 @@ const _ = require('lodash');
 const messages = {
   defaultError   : '`{value}` should valid for schema:{type}.{keyword}({params})',
   typeError      : '`{value}` should instance of {type}',
-  itemError      : 'Invalid items[{path}] for schema:array.items({schema}) -> {error.message}',
-  listError      : 'Invalid element for schema:array.items[{path}]({schema}) -> {error.message}',
-  containsError  : 'Invalid items for schema:array.contains({schema}) -> {error.message}',
-  propertyError  : 'Invalid property for schema:object.{keyword}[{path}]({schema}) -> {error.message}',
-  additionalError: 'Invalid item for schema:{type}.{keyword}({schema}) -> {error.message}',
+  elementError   : 'Invalid element[{path}] for schema:{type}.{keyword}({schema}) -> {error.message}',
+  containsError  : 'Invalid items for schema:array.contains({schema}) -> {error.message}'
 };
 
 const err = (template, defaults) => {

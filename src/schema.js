@@ -10,8 +10,8 @@ const stores = new Map;
 const $schema = (s) =>
   s === true ? stores.get('any') :
     s === false ? stores.get('none') :
-      _.isObject(s) ? s.isSchema ? s : stores.get('object').properties(s) :
-        _.isArray(s) ? stores.get('array').items(s.length > 1 ? s : s[0]) :
+      _.isArray(s) ? stores.get('array').items(s.length > 1 ? s : s[0]) :
+        _.isObject(s) ? s.isSchema ? s : stores.get('object').properties(s) :
           s;
 
 // TODO: ↓
@@ -80,11 +80,15 @@ function createSchema (type, checker) {
 
     /**
      * get schema instance property.
-     * @param {string} key
+     * @param {string|string[]} key
      * @return {*}
      */
     get (key) {
       return _.get(this._, key);
+    },
+
+    has (key) {
+      return _.has(this._, key);
     },
 
     /**
@@ -106,7 +110,7 @@ function createSchema (type, checker) {
         if (isAsync) return validator.call(this, value, params, cb);
         if (validator.call(this, value, params)) return cb();
 
-        return cb(new ValidationError(_.get(this._, ['errorMessage', keyword]) || message, {value, params, keyword, type}));
+        return cb(new ValidationError(this.get(['errorMessage', keyword]) || message, {value, params, keyword, type}));
       }, (err) => callback(err, value));
     }
 

@@ -1,8 +1,7 @@
 const _ = require('lodash');
 const $ = require('async');
-const {_keys} = require('./utils');
+const {_keys, iteratee} = require('./utils');
 const {createSchema, $schema} = require('./schema');
-const {ValidationError, messages} = require('./error');
 
 const type = 'object';
 const object = createSchema(type, _.isObject);
@@ -16,52 +15,26 @@ _.each(
     maxProperties: (obj, n) => _.size(obj) <= n,
     properties: {
       isAsync, validator: (value, props, callback) =>
-        $.each(_keys(value, props),
-          (path, cb) => props[path].isValid(value[path], (error, result) => {
-            if (error) return cb(new ValidationError(messages.propertyError, {
-              type, keyword: 'properties', path, value, error, schema: props[path]
-            }));
-            value[path] = result;
-            return cb();
-          }),
-          callback
-        )
+        $.each(_keys(value, props), (key, cb) => iteratee(props[key], value, key, type, 'properties', cb), callback)
     },
     patternProperties: {
       isAsync, validator: (value, patternProps, callback) => {
         const keys = _.keys(value), patterns = _.keys(patternProps), entries = [];
-        _.each(patterns, (pattern) => _.each(keys, path => {
-          if (RegExp(pattern).test(path)) entries.push([path, pattern]);
-        }));
-        $.each(entries, ([path, pattern], cb) => patternProps[pattern].isValid(value[path], (error, result) => {
-          if (error) return cb(new ValidationError(messages.propertyError, {
-            type, keyword: 'patternProperties', path: pattern, value, error, schema: patternProps[pattern]
-          }));
-          value[path] = result;
-          return cb();
-        }), callback);
+        _.each(patterns, (pattern) => _.each(keys, key => {if (RegExp(pattern).test(key)) entries.push([key, pattern]);}));
+
+        return $.each(entries, ([key, pattern], cb) => iteratee(patternProps[pattern], value, key, type, 'properties', cb), callback);
       }
     },
     additionalProperties: {
-      isAsync, validator: function (value, subSchema, callback) {
-        const keyword = 'additionalProperties';
-        const props = this.get('properties'), patternProps = this.get('patternProperties');
-        let additional = _.pullAll(_.keys(value), _.keys(props));
-        if (patternProps) {
-          const patterns = _.keys(patternProps);
-          const matched = _.filter(_.keys(value), key => _.some(patterns, pattern => RegExp(pattern).test(key)));
-          additional = _.pullAll(additional, matched);
-        }
-        return $.each(additional,
-          (path, cb) => subSchema.isValid(value[path], (error, result) => {
-            if (error) return cb(new ValidationError(messages.additionalError, {
-              type, keyword, path, value, error, subSchema
-            }));
-            value[path] = result;
-            return cb();
-          }),
-          callback
-        );
+      isAsync, validator: function (value, schema, callback) {
+        const keys = _.keys(value);
+
+        if (this.has('properties'))
+          _.pullAll(keys, _.keys(this.get('properties')));
+        if (this.has('patternProperties'))
+          _.pullAll(keys, _.filter(keys, key => _.some(_.keys(this.get('patternProperties')), pattern => RegExp(pattern).test(key))));
+
+        return $.each(keys, (key, cb) => iteratee(schema, value, key, 'object', 'additionalProperties', cb), callback);
       }
     },
   },
@@ -69,12 +42,7 @@ _.each(
 );
 
 object.proto('size', function (min, max, ...rest) {
-  let result;
-  if (min > 0)
-    result = this.minProperties(min, ...rest);
-  if (max >= min)
-    result = result.maxProperties(max, ...rest);
-  return result;
+  return this.minProperties(min, ...rest).maxProperties(max, ...rest);
 });
 
 _.each(['properties', 'patternProperties'], key =>

@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const {createSchema} = require('./schema');
 const {formats} = require('./formats');
-const XRegExp = require('xregexp');
 
 const string = createSchema('string', _.isString);
 
@@ -11,7 +10,7 @@ _.each(
     minLength: (v, l) => v.length >= l,
     maxLength: (v, l) => v.length <= l,
     pattern  : (v, r) => RegExp(r).test(v),
-    regexp   : (v, [source, flags]) => XRegExp(source, flags).test(v),
+    regexp   : (v, [source, flags]) => RegExp(source, flags).test(v),
     format   : (v, format) => formats[format](v),
     _format  : (v, [format, ...rest]) => formats[format.toString()](v, ...rest)
   },
@@ -20,7 +19,7 @@ _.each(
 
 string.proto('regexp',function (regex, flags, message) {
   if (flags && !(/^[nsxAgimuy]+$/).test(flags)) {message = flags; flags = ''}
-  let {source = regex, flags : fl = flags} = (regex.xregexp || regex);
+  let {source = regex, flags : fl = flags} = regex;
   let schema = new string.class({...this._, regexp: [source, fl]});
   if (message) _.set(schema._, ['errorMessage', 'regexp'], message);
   return schema;
