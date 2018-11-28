@@ -2,7 +2,7 @@ const _ = require('lodash');
 const $ = require('async');
 const {createSchema, $schema} = require('./schema');
 const {ValidationError, messages} = require('./error');
-const {_uniq, iteratee} = require('./utils');
+const {_uniq, _size, iteratee} = require('./utils');
 const {any} = require('./any');
 
 const array = createSchema('array', _.isArray);
@@ -11,8 +11,8 @@ const isAsync = true;
 _.each(
   {
     uniqueItems: {defaults: true, validator: (arr, y) => !y || _uniq(arr)},
-    minItems: (arr, l) => arr.length >= l,
-    maxItems: (arr, l) => arr.length <= l,
+    minItems: _size.min,
+    maxItems: _size.max,
     contains: {
       isAsync, defaults: any, validator: (value, schema, callback) => $.someSeries(value,
         (item, cb) => schema.isValid(item, (invalid) => cb(null, _.isNil(invalid))),

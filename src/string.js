@@ -1,14 +1,15 @@
 const _ = require('lodash');
 const {createSchema} = require('./schema');
 const {formats} = require('./formats');
+const {_size} = require('./utils');
 
 const string = createSchema('string', _.isString);
 
 _.each(
   {
     enum     : _.flip(_.includes),
-    minLength: (v, l) => v.length >= l,
-    maxLength: (v, l) => v.length <= l,
+    minLength: _size.min,
+    maxLength: _size.max,
     pattern  : (v, r) => RegExp(r).test(v),
     regexp   : (v, [source, flags]) => RegExp(source, flags).test(v),
     format   : (v, format) => formats[format](v),

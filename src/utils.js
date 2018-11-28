@@ -6,6 +6,11 @@ const _keys = (obj1, obj2) => _.intersection(_.keys(obj1), _.keys(obj2));
 
 const _uniq = (arr) => _.every(arr, (item, i) => _.eq(_.indexOf(arr, item), i));
 
+const _size = {
+  min: (obj, n) => _.size(obj) >= n,
+  max: (obj, n) => _.size(obj) <= n
+};
+
 const iteratee = (schema, value, path, type, keyword, cb) =>
   schema.isValid(value[path], (error, result) =>
     error ?
@@ -16,5 +21,6 @@ const iteratee = (schema, value, path, type, keyword, cb) =>
 module.exports = {
   _keys,
   _uniq,
+  _size,
   iteratee,
 };

@@ -1,6 +1,6 @@
 const _ = require('lodash');
 const $ = require('async');
-const {_keys, iteratee} = require('./utils');
+const {_keys, _size, iteratee} = require('./utils');
 const {createSchema, $schema} = require('./schema');
 
 const type = 'object';
@@ -11,8 +11,8 @@ _.each(
   {
     required: (obj, props) => _.every(props, p => _.has(obj, p) && obj[p] !== undefined),
     dependencies: (obj, param) => _.every(param, (deps, prop) => (!_.has(obj, prop) || _.every(deps, dep => _.has(obj, dep)))),
-    minProperties: (obj, n) => _.size(obj) >= n,
-    maxProperties: (obj, n) => _.size(obj) <= n,
+    minProperties: _size.min,
+    maxProperties: _size.max,
     properties: {
       isAsync, validator: (value, props, callback) =>
         $.each(_keys(value, props), (key, cb) => iteratee(props[key], value, key, type, 'properties', cb), callback)
