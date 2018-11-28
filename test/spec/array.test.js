@@ -73,17 +73,28 @@ describe('ARRAY SCHEMA TEST', () => {
       (cb) => tuple.isValid([1, 2], shouldError(cb)),
       (cb) => tuple.isValid([1, 'foo', 2, 'bar'], shouldError(cb)),
 
+    ], done);
+
+  });
+
+  it('Items size', (done) => {
+    let lists = array.items(number.max(10, true));
+    let tuple = array.items([number, string, number, nil]);
+
+    series([
+      (cb) => lists.minItems(1).isValid([], (err) => {
+        err.should.be.instanceOf(Error);
+        return cb();
+      }),
+
       (cb) => tuple.maxItems(4).isValid(items, (err) => {
         err.should.be.instanceOf(Error);
         return cb();
       }),
 
       (cb) => tuple.minItems(5).isValid(items, cb)
+
     ], done);
-
-  });
-
-  it('Items size', (done) => {
 
   });
 

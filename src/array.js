@@ -10,22 +10,22 @@ const isAsync = true;
 
 _.each(
   {
-    uniqueItems: (arr, y = true) => !y || _uniq(arr),
+    uniqueItems: {defaults: true, validator: (arr, y) => !y || _uniq(arr)},
     minItems: (arr, l) => arr.length >= l,
     maxItems: (arr, l) => arr.length <= l,
     contains: {
-      isAsync, validator: (value, schema, callback) => $.someSeries(value,
+      isAsync, defaults: any, validator: (value, schema, callback) => $.someSeries(value,
         (item, cb) => schema.isValid(item, (invalid) => cb(null, _.isNil(invalid))),
         (err, valid) => callback(valid ? null : ValidationError(messages.containsError, {schema}), value)
       )
     },
     items: {
-      isAsync, validator: (value, items, callback) =>
+      isAsync, defaults: any, validator: (value, items, callback) =>
         $.times(_([value, items]).map('length').min(), (i, cb) =>
           iteratee(_.isArray(items) ? items[i] : items, value, i, 'array', 'items', cb), callback)
     },
     additionalItems: {
-      isAsync, validator: function (value, schema, callback) {
+      isAsync, defaults: any, validator: function (value, schema, callback) {
         const int = this.get('items.length');
         if (!(int < value.length)) return callback(null, value);
         //! ↑ also checked `items` is not `array`;
@@ -41,12 +41,16 @@ array.proto('unique', function (y, msg) {
   return this.uniqueItems(y, msg);
 });
 
-array.hook('items', function (items, params = any, message, ...rest) {
-  if (message === true) return items(params, ...rest);
-  return items(params.length > 1 ? params : $schema(params), message, ...rest);
+array.hook('items', function (items, params = any, message) {
+  return items(_.isArray(params) ? _.map(params, $schema) : params, message);
+});
+
+array.proto('reduce', function (params = any, message) {
+  return this.items(params.length > 1 ? params : $schema(params), message);
 });
 
 module.exports = {
   array,
-  unique: array.unique(true)
+  unique: array.unique(true),
+  $array: array.items
 };

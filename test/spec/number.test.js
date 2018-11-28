@@ -4,6 +4,13 @@ const _ = require('lodash');
 const {series} = require('async');
 const {number, integer} = require('../../src/number');
 
+const checkErr = (cb, msg) => (err) => {
+  should.exist(err);
+  err.should.instanceOf(Error);
+  if (msg) err.message.should.eq(msg);
+  return cb();
+};
+
 describe('NUMERIC SCHEMA TEST', () => {
 
   let float = Math.random();
@@ -32,32 +39,18 @@ describe('NUMERIC SCHEMA TEST', () => {
   });
 
   it('Integer validate', (done) => {
-    integer.isValid(float, (err) => {
-      err.should.be.instanceOf(Error);
-
-      integer.isValid(int, (err, val) => {
-        should.not.exist(err);
-        val.should.equal(val);
-
-        return done();
-      });
-    });
+    series([
+      cb => integer.isValid(int, cb),
+      cb => integer.isValid(float, checkErr(cb)),
+      cb => integer.max(1).isValid(float, checkErr(cb)),
+    ], done);
   });
 
   it('Multiple of validate', (done) => {
     series([
-      (cb) => integer.multipleOf(3).isValid(5, (err) => {
-        err.should.be.instanceOf(Error);
-        return cb();
-      }),
-      (cb) => integer.multipleOf(3).isValid(6, (err) => {
-        should.not.exist(err);
-        return cb();
-      }),
-      (cb) => number.multipleOf(2.5).isValid(5, (err) => {
-        should.not.exist(err);
-        return cb();
-      }),
+      (cb) => integer.multipleOf(3).isValid(5, checkErr(cb)),
+      (cb) => integer.multipleOf(3).isValid(6, cb),
+      (cb) => number.multipleOf(2.5).isValid(5, cb),
     ], done);
   });
 
@@ -71,20 +64,11 @@ describe('NUMERIC SCHEMA TEST', () => {
 
     series([
 
-      (cb) => minNumSchema.isValid(int - float, (err) => {
-        err.should.be.instanceOf(Error);
-        return cb();
-      }),
+      (cb) => minNumSchema.isValid(int - float, checkErr(cb)),
 
-      (cb) => rangeSchema.isValid(int - float, (err) => {
-        should.not.exist(err);
-        return cb();
-      }),
+      (cb) => rangeSchema.isValid(int - float, cb),
 
-      (cb) => maxNumSchema.isValid(int + float, (err) => {
-        err.should.be.instanceOf(Error);
-        return cb();
-      }),
+      (cb) => maxNumSchema.isValid(int + float, checkErr(cb)),
 
       (cb) => maxNumSchema.isValid(int - float, (err, val) => {
         should.not.exist(err);
@@ -92,15 +76,9 @@ describe('NUMERIC SCHEMA TEST', () => {
         return cb();
       }),
 
-      (cb) => maxNumSchema.isValid(int, (err) => {
-        should.not.exist(err);
-        return cb();
-      }),
+      (cb) => maxNumSchema.isValid(int, cb),
 
-      (cb) => number.max(int).isValid(int, (err) => {
-        err.should.be.instanceOf(Error);
-        return cb();
-      }),
+      (cb) => number.max(int).isValid(int, checkErr(cb)),
 
     ], done);
   });

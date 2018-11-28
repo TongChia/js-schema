@@ -52,5 +52,5 @@ _.each(['properties', 'patternProperties'], key =>
 
 module.exports = {
   object,
-  Obj: object.properties
+  $object: object.properties,
 };

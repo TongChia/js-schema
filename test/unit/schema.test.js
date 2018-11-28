@@ -53,7 +53,7 @@ describe('MONGOOSE LIKE SCHEMA', () => {
     }).isValid({
 
       name     : 'tongChia',
-      binary   : new Buffer([]),
+      binary   : Buffer.from([]),
       living   : true,
       updated  : new Date(),
       age      : 30,

@@ -20,7 +20,7 @@ _.each(
 string.proto('regexp',function (regex, flags, message) {
   if (flags && !(/^[nsxAgimuy]+$/).test(flags)) {message = flags; flags = ''}
   let {source = regex, flags : fl = flags} = regex;
-  let schema = new string.class({...this._, regexp: [source, fl]});
+  let schema = string.division({regexp: [source, fl]});
   if (message) _.set(schema._, ['errorMessage', 'regexp'], message);
   return schema;
 });
@@ -32,7 +32,7 @@ string.proto('format', function (format, ...rest) {
       'https://github.com/TongChia/js-schema/issues?q=is%3Aissue+format+' + format
     );
 
-  let message, keyword = 'format', schema = new string.class({...this._});
+  let message, keyword = 'format', schema = string.division();
 
   // Avoid conflict with json-schema's `format`, in the case of multiple parameters
   if (rest.length && _.last(rest).isTemplate) message = rest.pop();

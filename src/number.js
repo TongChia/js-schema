@@ -5,6 +5,7 @@ const number = createSchema('number', _.isFinite);
 
 _.each({
   enum   : _.flip(_.includes),
+  integer: {defaults: true, validator: (n, y) => !y || _.isInteger(n)},
   maximum: _.lte,
   minimum: _.gte,
   exclusiveMaximum: _.lt,
@@ -26,5 +27,5 @@ _.each({
 
 module.exports = {
   number,
-  integer: _.assign(new number.class({type: 'integer'}), {isTyped: _.isInteger})
+  integer: number.integer(true).set('type', 'integer')
 };

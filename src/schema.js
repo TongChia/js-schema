@@ -7,17 +7,24 @@ const version = '0.2';
 
 const stores = new Map;
 
+/* eslint-disable indent */
 const $schema = (s) =>
   s === true ? stores.get('any') :
-    s === false ? stores.get('none') :
-      _.isArray(s) ? stores.get('array').items(s.length > 1 ? s : s[0]) :
-        _.isObject(s) ? s.isSchema ? s : stores.get('object').properties(s) :
-          s;
+  s === false ? stores.get('none') :
+  _.isString(s) ? stores.get(s) :
+  _.isArray(s) ? stores.get('array').reduce(s.length > 1 ? s : s[0]) :
+  _.isObject(s) ? s.isSchema ? s : stores.get('object').properties(s) :
+  s;
+/* eslint-enable indent */
 
-// TODO: ↓
-// const toSchema = function (schema) {
-//
-// };
+const parase = function (json) {
+  let schema;
+  if (_.isString(json)) json = JSON.parse(json);
+  const {type, _type, ...others} = json;
+  schema = stores.get(_type || type);
+  if (schema) _.assign(schema._, others);
+  return schema;
+};
 
 const toJSON = function () {
   return {
@@ -75,7 +82,8 @@ function createSchema (type, checker) {
      * @return {Schema}
      */
     set (key, value) {
-      return _.set(this._, key, value);
+      _.set(this._, key, value);
+      return this;
     },
 
     /**
@@ -89,6 +97,10 @@ function createSchema (type, checker) {
 
     has (key) {
       return _.has(this._, key);
+    },
+
+    division (variation = {}) {
+      return new Schema({...this._, ...variation});
     },
 
     /**
@@ -141,8 +153,8 @@ function createSchema (type, checker) {
     addKeyword (keyword, defaults) {
       const def = _.clone(defaults);
       return this.proto(keyword, function (params, message) {
-        const schema = new Schema({...this._, [keyword]: _.defaultTo(params, def)});
-        if (message) _.set(schema._, ['errorMessage', keyword], message);
+        const schema = this.division({[keyword]: _.defaultTo(params, def)});
+        if (message) schema.set(['errorMessage', keyword], message);
         return schema;
       });
     },
@@ -166,4 +178,5 @@ module.exports = {
   $schema,
   createSchema,
   toJSON,
+  parase
 };
