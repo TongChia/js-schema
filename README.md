@@ -4,11 +4,11 @@ JS-SCHEMA
 [![npm](https://img.shields.io/npm/v/@tongchia/jsschema.svg)](https://www.npmjs.com/package/@tongchia/jsschema) 
 [![NpmLicense](https://img.shields.io/npm/l/@tongchia/jsschema.svg)](https://www.npmjs.com/package/@tongchia/jsschema) 
 
-JS Schema validation library, compatible with `json-schema`.  
-But not fully complying with `json-schema`,
-the goal is to do data protection between the front, back end and database or micro services;
-make it reusable as possible;
-pursues concise and stylish code style.
+JS Schema validation library, compatible with `json-schema`. 
+But not fully complying with `json-schema`, 
+It is more suitable for js use, just refer to the json-schema specification, 
+pursues concise and stylish code style, 
+make it reusable as possible.
 
 
 QUICK START
@@ -22,24 +22,26 @@ npm i -S '@tongchia/jsschema'
 
 ### Usage
 ```js
-const {object, string, number, date, array, boolean} = require('jsschema');
+const {object, string, number, integer, date, array, boolean} = require('jsschema');
 
 const person = object
   .properties({
     name    : string.maxLength(200).minLength(5),
-    age     : number.min(0).max(130, true), // > 0 && <= 130
+    age     : integer.min(0).max(130, true), // > 0 && <= 130
+    email   : string.format('email'),
     birthday: date.after('1890-01-01'),
     married : boolean.default(false),
-    books   : array.items(object.properties({
+    books   : [{ // => array.items(object.properties({
       title : string,
       author: string,
       publication_date: string.format('date')
-    })),
+    }],
     loggedIn: object.properties({
       ip    : string.format('ip'), // include ipv4 & ipv6
       oauth : string.enum(['facebook', 'github']),
       date  : date.default(Date.now)
-    })
+    }),
+    ofNumber: [number], // => array.items(number)
   })
   .required(['name', 'age', 'birthday']);
 
@@ -77,7 +79,7 @@ VALIDATE
     - [x] hostname
     - [ ] uri, iri 
     - [ ] uri-template
-    - [x] regexp ([slevithan/xregexp](https://github.com/slevithan/xregexp))
+    - [x] regexp
   - [ ] String-Encoding Non-JSON Data
 - number (integer)
   - [x] enum
@@ -107,34 +109,33 @@ VALIDATE
   - [x] patternProperties
   - [x] additionalProperties
   - [x] size (`minProperties`, `maxProperties`)
+  - [x] propertyNames
   - [x] dependencies
     - [ ] schema dependencies
-  - [ ] propertyNames
-- [x] null (nil)
-- [x] boolean
 - buffer
   - [ ] converter (`strings`, `base64`)
+- null (nil)
+- boolean
 - function
 - Metadata
   - [x] title
   - [x] description
   - [x] default
   - [x] examples
-- Combining schemas
-  - [ ] allOf
-  - [ ] anyOf
-  - [ ] oneOf
-  - [ ] not
-- [ ] Constant values
-- [ ] Enumerated values
+- [x] Constant values
+- [x] Enumerated values
 - json-schema
   - [x] generate json-schema
-  - [ ] parse json-schema
+  - [x] parse json-schema ⚡️
+- Combining schemas
+  - [ ] allOf ⚡️
+  - [ ] anyOf ⚡️
+  - [ ] oneOf ⚡️
+  - [ ] not ⚡️
 - referenced schema
   - [ ] $id ⚡️
   - [ ] $ref ⚡️
   - [ ] resolve method (browser & nodeJs) ⚡️
-  - [ ] cache
 
 ### Custom
 ```javascript

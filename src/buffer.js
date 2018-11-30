@@ -1,16 +1,10 @@
 const _ = require('lodash');
-const {createSchema, toJSON} = require('./schema');
-const {_size} = require('./utils');
+const {createSchema} = require('./schema');
+const {keywords} = require('./keywords');
 
 const buffer = createSchema('buffer', _.isBuffer);
 
-_.each({
-  minBytes: _size.min,
-  maxBytes: _size.max,
-}, (validator, keyword) => buffer.addValidate(keyword, validator));
-
-buffer.proto('toJSON', function () {
-  return {...toJSON.call(this), type: 'string', _type: 'buffer'};
-});
+_.each(keywords.buffer, (v, k) => buffer.addValidate(k, v));
+_.each(keywords.common, (v, k) => buffer.addValidate(k, v));
 
 module.exports = {buffer};

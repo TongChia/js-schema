@@ -1,37 +1,28 @@
 const _ = require('lodash');
 const $ = require('async');
-const {_keys} = require('./utils');
+const {_keys} = require('./keywords');
 const {ValidationError, messages} = require('./error');
 
-const version = '0.2';
-
-const stores = new Map;
+const STORE = new Map;
+const JSON_TYPE = ['string', 'number', 'boolean', 'null', 'array', 'object'];
 
 /* eslint-disable indent */
-const $schema = (s) =>
-  s === true ? stores.get('any') :
-  s === false ? stores.get('none') :
-  _.isString(s) ? stores.get(s) :
-  _.isArray(s) ? stores.get('array').reduce(s.length > 1 ? s : s[0]) :
-  _.isObject(s) ? s.isSchema ? s : stores.get('object').properties(s) :
+const _schema = (s) =>
+  s === undefined ? STORE.get('any') :
+  s === true      ? STORE.get('any') :
+  s === false     ? STORE.get('none') :
+  _.isString(s)   ? STORE.get(s) :
+  _.isArray(s)    ? STORE.get('array').reduce(s.length > 1 ? s : s[0]) :
+  _.isObject(s)   ? s.isSchema ? s : STORE.get('object').properties(s) :
   s;
 /* eslint-enable indent */
 
-const parase = function (json) {
-  let schema;
-  if (_.isString(json)) json = JSON.parse(json);
-  const {type, _type, ...others} = json;
-  schema = stores.get(_type || type);
-  if (schema) _.assign(schema._, others);
-  return schema;
-};
-
 const toJSON = function () {
-  return {
-    $schema: 'http://json-schema.org/draft-07/schema#',
-    $js_schema: version,
-    ...this._,
-  };
+  let {type, ...json} = this._;
+  return ({
+    [JSON_TYPE.includes(type) ? 'type' : '_js_type']: type,
+    ...json
+  });
 };
 
 const toString = function () {
@@ -45,7 +36,7 @@ const toString = function () {
 /**
  * create Schema constructor.
  * @param type {string}
- * @param checker {?function}
+ * @param checker? {Function}
  * @return {function}
  */
 function createSchema (type, checker) {
@@ -166,17 +157,15 @@ function createSchema (type, checker) {
     }
   });
 
-  _.each(['title', 'description', 'examples', 'default'], (k) => schema.addKeyword(k));
+  _.each(['title', 'description', 'examples', 'default', '$comment'], (k) => schema.addKeyword(k));
 
-  stores.set(type, schema);
+  STORE.set(type, schema);
 
   return schema;
 }
 
 module.exports = {
-  stores,
-  $schema,
+  _schema,
   createSchema,
-  toJSON,
-  parase
+  toJSON
 };

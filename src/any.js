@@ -1,12 +1,19 @@
 const _ = require('lodash');
-const {createSchema, toJSON} = require('./schema');
+const {createSchema} = require('./schema');
+const {keywords} = require('./keywords');
 
-const any = createSchema('any', _.stubTrue);
+const any = createSchema('any');
 
-any.proto('toJSON', function () {
+_.each(keywords, vs =>
+  _.each(vs, (v, k) =>
+    any.addValidate(k, v)));
+
+any.hook('toJSON', function (toJSON) {
   if (this.original) return true;
-  let {type, ...json} = toJSON.call(this);
-  return {...json, _type: type, not: false};
+  return toJSON();
 });
 
-module.exports = {any};
+module.exports = {
+  any,
+  enum: any.enum
+};

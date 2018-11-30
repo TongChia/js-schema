@@ -11,4 +11,5 @@ module.exports = {
   ...require('./any'),
   ...require('./none'),
   ...require('./function'),
+  ...require('./parse'),
 };

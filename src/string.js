@@ -1,22 +1,12 @@
 const _ = require('lodash');
 const {createSchema} = require('./schema');
 const {formats} = require('./formats');
-const {_size} = require('./utils');
+const {keywords} = require('./keywords');
 
 const string = createSchema('string', _.isString);
 
-_.each(
-  {
-    enum     : _.flip(_.includes),
-    minLength: _size.min,
-    maxLength: _size.max,
-    pattern  : (v, r) => RegExp(r).test(v),
-    regexp   : (v, [source, flags]) => RegExp(source, flags).test(v),
-    format   : (v, format) => formats[format](v),
-    _format  : (v, [format, ...rest]) => formats[format.toString()](v, ...rest)
-  },
-  (validate, keyword) => string.addValidate(keyword, validate)
-);
+_.each(keywords.string, (v, k) => string.addValidate(k, v));
+_.each(keywords.common, (v, k) => string.addValidate(k, v));
 
 string.proto('regexp',function (regex, flags, message) {
   if (flags && !(/^[nsxAgimuy]+$/).test(flags)) {message = flags; flags = ''}

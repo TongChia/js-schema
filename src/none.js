@@ -1,12 +1,11 @@
 const _ = require('lodash');
-const {createSchema, toJSON} = require('./schema');
+const {createSchema} = require('./schema');
 
 const none = createSchema('none', _.stubFalse);
 
-none.proto('toJSON', function () {
+none.hook('toJSON', function (toJSON) {
   if (this.original) return false;
-  let {type, ...json} = toJSON.call(this);
-  return {...json, _type: type, not: true};
+  return _.assign(toJSON(), {not: true});
 });
 
 module.exports = {none};
