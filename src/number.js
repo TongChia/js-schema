@@ -19,7 +19,11 @@ _.each({
 }, (method, keyword) => number.proto(keyword, method));
 _.each(keywords.common, (v, k) => number.addValidate(k, v));
 
+const integer = number.integer(true).set('type', 'integer');
+
 module.exports = {
   number,
-  integer: number.integer(true).set('type', 'integer')
+  num: number,
+  integer,
+  int: integer
 };

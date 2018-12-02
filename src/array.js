@@ -21,6 +21,7 @@ array.proto('reduce', function (params, message) {
 
 module.exports = {
   array,
+  arr: array,
   unique: array.unique(true),
   $array: array.items
 };

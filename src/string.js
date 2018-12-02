@@ -39,4 +39,4 @@ string.proto('format', function (format, ...rest) {
   return schema;
 });
 
-module.exports = {string};
+module.exports = {string, str: string};

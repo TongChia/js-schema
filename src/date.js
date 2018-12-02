@@ -23,14 +23,4 @@ date.hook('toJSON', function (toJSON) {
 date.addKeyword('accept', 'all');
 date.hook('accept', (accept, params) => accept(_.isArray(params) ? params : [params]));
 
-// date.hook('isValid', function (isValid, value, callback) {
-//   if (this.has('accept')) {
-//     _.each(this.get('accept'), () => {
-//
-//     });
-//   }
-//
-//   return isValid(value, callback);
-// });
-
 module.exports = {date};

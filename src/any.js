@@ -15,5 +15,6 @@ any.hook('toJSON', function (toJSON) {
 
 module.exports = {
   any,
+  '*': any,
   enum: any.enum
 };
