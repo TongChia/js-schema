@@ -5,10 +5,7 @@ JS-SCHEMA
 [![NpmLicense](https://img.shields.io/npm/l/@tongchia/jsschema.svg)](https://www.npmjs.com/package/@tongchia/jsschema) 
 
 JS Schema validation library, compatible with `json-schema`. 
-But not fully complying with `json-schema`, 
-It is more suitable for js use, just refer to the json-schema specification, 
-pursues concise and stylish code style, 
-make it reusable as possible.
+It is more suitable for js use, pursues concise and stylish code style, make it reusable as possible.
 
 
 QUICK START
