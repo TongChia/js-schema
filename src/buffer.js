@@ -2,9 +2,9 @@ const _ = require('lodash');
 const {createSchema} = require('./schema');
 const {keywords} = require('./keywords');
 
-const buf = createSchema('buffer', _.isBuffer);
+const buff = createSchema('buffer', _.isBuffer);
 
-_.each(keywords.buffer, (v, k) => buf.addValidate(k, v));
-_.each(keywords.common, (v, k) => buf.addValidate(k, v));
+_.each(keywords.buffer, (v, k) => buff.addValidate(k, v));
+_.each(keywords.common, (v, k) => buff.addValidate(k, v));
 
-module.exports = {buf, buffer: buf};
+module.exports = {buff, buffer: buff};

@@ -22,28 +22,38 @@ npm i -S '@tongchia/jsschema'
 
 ### Usage
 ```js
-const {object, string, number, integer, date, array, boolean} = require('jsschema');
+const {obj, str, num, int, date, arr, bool, buff, any} = require('jsschema');
 
-const person = object
-  .properties({
-    name    : string.maxLength(200).minLength(5),
-    age     : integer.min(0).max(130, true), // > 0 && <= 130
-    email   : string.format('email'),
-    birthday: date.after('1890-01-01'),
-    married : boolean.default(false),
-    books   : [{ // => array.items(object.properties({
-      title : string,
-      author: string,
-      publication_date: string.format('date')
-    }],
-    loggedIn: object.properties({
-      ip    : string.format('ip'), // include ipv4 & ipv6
-      oauth : string.enum(['facebook', 'github']),
-      date  : date.default(Date.now)
-    }),
-    ofNumber: [number], // => array.items(number)
-  })
-  .required(['name', 'age', 'birthday']);
+const person = obj.properties({
+  name      : str.maxLength(200).minLength(5),
+  binary    : buff,
+  living    : bool.default(true),
+  updated   : date.default(Date.now),
+  age       : int.min(0).max(65, true), // > 0 && <= 130
+  email     : str.format('email'),
+  birthday  : date.after('1890-01-01'),
+  
+  mixed     : any,
+  _someId   : str.format('mongo-id'),
+  _array    : arr,
+  array     : [],
+  _ofString : arr.items(str),
+  ofString  : [str], // same as `array.items(string)` ↑
+  ofNumber  : [num],
+  ofDates   : [date],
+  ofBuffer  : [buff],
+  ofBoolean : [bool],
+  ofMixed   : [any],
+  ofObjectId: [str.format('mongo-id')],
+  
+  ofArrays  : [[]],
+  ofArrayOfNumbers : [[num]],
+  
+  books     : [{ // => array.items(object.properties({...
+    title     : str,
+    author    : [str],
+  }],
+}).required(['name', 'age', 'birthday']);
 
 person.isValid({
   name    : 'TongChia',
@@ -52,6 +62,9 @@ person.isValid({
 }, (err) => {
   assert.ifError(err);
 });
+
+// to json-schema;
+console.log(JSON.stringify(person))
 ```
 
 VALIDATE
@@ -138,7 +151,7 @@ VALIDATE
   - [ ] $ref ⚡️
   - [ ] resolve method (browser & nodeJs) ⚡️
 
-### Custom
+### Custom validate
 ```javascript
 const {string} = require('jsschema');
 

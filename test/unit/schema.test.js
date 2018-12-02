@@ -43,6 +43,37 @@ describe('MONGOOSE LIKE SCHEMA', () => {
 
   });
 
+  person = object.properties({
+      name      : string.maxLength(200).minLength(5),
+      binary    : buffer,
+      living    : boolean.default(true),
+      updated   : date.default(Date.now),
+      age       : integer.min(0).max(65, true),
+      email     : string.format('email'),
+      birthday  : date.after('1890-01-01'),
+
+      mixed     : any,
+      _someId   : string.format('mongo-id'),
+      _array    : array,
+      array     : [],
+      _ofString : array.items(string),
+      ofString  : [string],
+      ofNumber  : [number],
+      ofDates   : [date],
+      ofBuffer  : [buffer],
+      ofBoolean : [boolean],
+      ofMixed   : [any],
+      ofObjectId: [string.format('mongo-id')],
+
+      ofArrays  : [[]],
+      ofArrayOfNumbers : [[number]],
+
+      books     : [{
+        title     : string,
+        author    : [string],
+      }],
+    }).required(['name', 'age', 'birthday']);
+
   it('should valid', (done) => {
 
     schema.isValid({

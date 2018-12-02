@@ -4,7 +4,7 @@ const {_keys} = require('./keywords');
 const {ValidationError, messages} = require('./error');
 
 const STORE = new Map;
-const JSON_TYPE = ['string', 'number', 'boolean', 'null', 'array', 'object'];
+const JSON_TYPE = ['string', 'number', 'integer', 'boolean', 'null', 'array', 'object'];
 
 /* eslint-disable indent */
 const _schema = (s) =>
