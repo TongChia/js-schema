@@ -90,7 +90,7 @@ VALIDATE
   - [x] integer
   - [x] multipleOf
   - [ ] converter (`numeric`)
-- date
+- date (`js-schema`)
   - [x] after
   - [x] before
   - [ ] converter (`date-time`, `full-date`, `date-string`, `time-stamp`)
@@ -112,26 +112,27 @@ VALIDATE
   - [x] propertyNames
   - [x] dependencies
     - [ ] schema dependencies
-- buffer
+- buffer (`js-schema`)
   - [ ] converter (`strings`, `base64`)
 - null (nil)
 - boolean
-- function
+- function (`js-schema`)
+- any
+  - [x] allOf
+  - [x] anyOf
+  - [x] oneOf
+  - [x] not
+- [x] Constant values
+- [x] Enumerated values
 - Metadata
   - [x] title
   - [x] description
   - [x] default
   - [x] examples
-- [x] Constant values
-- [x] Enumerated values
 - json-schema
   - [x] generate json-schema
-  - [x] parse json-schema ⚡️
-- Combining schemas
-  - [ ] allOf ⚡️
-  - [ ] anyOf ⚡️
-  - [ ] oneOf ⚡️
-  - [ ] not ⚡️
+  - [x] parse json-schema
+    - [ ] Combining schemas ⚡️
 - referenced schema
   - [ ] $id ⚡️
   - [ ] $ref ⚡️

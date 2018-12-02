@@ -45,16 +45,33 @@ describe('OBJECT SCHEMA TEST', () => {
   });
 
   it('Object properties validate', (done) => {
-    schema.isValid(person, (err, val) => {
-      should.not.exist(err);
-      val.should.deep.equal(person);
 
-      schema.isValid({age: 'foobar'}, (err) => {
+    $.series([
+
+      cb => schema.isValid(person, cb),
+
+      cb => schema.isValid({age: 'foobar'}, (err) => {
         err.should.be.instanceOf(Error);
+        return cb();
+      }),
 
-        return done();
-      });
-    });
+      cb => object.properties({
+        foo: string,
+        bar: number,
+        person: schema,
+      }).isValid({foo: 'baz', bar: 1, person}, cb),
+
+
+      cb => object.properties({
+        person: schema,
+      }).isValid({person: {name: 123}}, (err) => {
+        err.should.be.instanceOf(Error);
+        err.path.should.be.eq('person.name');
+        return cb();
+      })
+
+    ], done);
+
   });
 
   it('Object size validate', (done) => {
@@ -171,6 +188,55 @@ describe('OBJECT SCHEMA TEST', () => {
       }, cb)
 
     ], done);
+  });
+
+  it('Matched properties', (done) => {
+
+    $.series([
+
+      cb => object
+        .properties({foo: string, bar: number})
+        .matched(true)
+        .isValid({foo: 'hello'}, cb),
+
+      cb => object
+        .properties({foo: string, bar: number})
+        .matched(2)
+        .isValid({foo: 'hello'}, (err) => {
+          err.should.instanceOf(Error);
+          return cb();
+        }),
+
+      cb => object
+        .patternProperties({'^\\d+$': string})
+        .matched(true)
+        .isValid({'1': 'hello'}, cb),
+
+      cb => object
+        .patternProperties({'^\\d+$': string})
+        .matched(2)
+        .isValid({'1': 'hello', 'foo': 'bar'}, (err) => {
+          err.should.instanceOf(Error);
+          return cb();
+        }),
+
+      cb => object
+        .properties({'foo': string})
+        .patternProperties({'^\\d+$': string})
+        .matched(2)
+        .isValid({'1': 'hello', 'foo': 'bar'}, cb),
+
+      cb => object
+        .properties({'foo': string})
+        .patternProperties({'^foo$': string})
+        .matched(2)
+        .isValid({'1': 'hello', 'foo': 'bar'}, (err) => {
+          err.should.instanceOf(Error);
+          return cb();
+        })
+
+    ], done);
+
   });
 
 });
