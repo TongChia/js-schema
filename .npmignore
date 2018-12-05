@@ -1,2 +1,10 @@
+*.iml
+.idea
+.babelrc
+.editorconfig
+.eslintrc
+docker-compose.yml
+Dockerfile
 !lib
 src
+test
