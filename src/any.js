@@ -2,19 +2,22 @@ const _ = require('lodash');
 const {createSchema} = require('./schema');
 const {keywords} = require('./keywords');
 
-const any = createSchema('any');
+const mixed = createSchema('any');
+const Mixed = mixed.class;
 
 _.each(keywords, vs =>
   _.each(vs, (v, k) =>
-    any.addValidate(k, v)));
+    Mixed.addValidate(k, v)));
 
-any.hook('toJSON', function (toJSON) {
+Mixed.hook('toJSON', function (toJSON) {
   if (this.original) return true;
   return toJSON();
 });
 
 module.exports = {
-  any,
-  '*': any,
-  enum: any.enum
+  any: mixed,
+  '*': mixed,
+  mixed,
+  enums: mixed.enum.bind(mixed),
+  constant: mixed['const'].bind(mixed),
 };

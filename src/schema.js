@@ -62,26 +62,13 @@ function createSchema (type, checker) {
 
     toJSON, toString,
 
-    // valueOf () {return this._},
-
     isTyped: checker || _.stubTrue,
 
-    /**
-     * set schema instance property.
-     * @param {string|string[]} key
-     * @param value
-     * @return {Schema}
-     */
     set (key, value) {
       _.set(this._, key, value);
       return this;
     },
 
-    /**
-     * get schema instance property.
-     * @param {string|string[]} key
-     * @return {*}
-     */
     get (key) {
       return _.get(this._, key);
     },
@@ -90,8 +77,17 @@ function createSchema (type, checker) {
       return _.has(this._, key);
     },
 
+    /**
+     * division - Create new instance & merge properties;
+     * @param {Object} variation
+     * @return {Schema}
+     */
     division (variation = {}) {
       return new Schema({...this._, ...variation});
+    },
+
+    accept (...rest) {
+      return this.division({accept: _.flatten(rest)});
     },
 
     /**
@@ -125,8 +121,9 @@ function createSchema (type, checker) {
      */
   });
 
-  let schema = _.assign(new Schema({type}), {
-    original: true,
+  _.assign(Schema, {
+
+    validates: {},
 
     proto (prop, method) {
       if (arguments.length === 1) return proto[prop];
@@ -151,13 +148,21 @@ function createSchema (type, checker) {
     },
 
     addValidate (keyword, validate, msg) {
-      const {isAsync, message = msg, validator = validate, defaults} = validate;
+      if (_.isFunction(validate)) return this.addValidate(keyword, {validator: validate, message: msg});
+      const {isAsync, message, validator, defaults} = validate;
       _.set(Schema.validates, keyword, _.omitBy({validator, message, isAsync}, _.isUndefined));
       return this.addKeyword(keyword, defaults);
     }
   });
 
-  _.each(['title', 'description', 'examples', 'default', '$comment'], (k) => schema.addKeyword(k));
+  _.each(['title', 'description', 'examples', 'default', '$comment'], (k) => Schema.addKeyword(k));
+
+  const schema = _.assign(new Schema({type}), {
+    original: true,
+    use () {
+      // TODO
+    }
+  });
 
   STORE.set(type, schema);
 

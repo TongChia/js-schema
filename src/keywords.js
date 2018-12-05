@@ -3,10 +3,27 @@ const $ = require('async');
 const {formats} = require('./formats');
 const {ValidationError : Err, messages} = require('./error');
 
+/**
+ *
+ * @param v1
+ * @param v2
+ * @param deep
+ * @return {boolean}
+ * @private
+ */
+const _equal = (v1, v2, deep = 3) => {
+  let [t1, t2] = _.map([v1, v2], (x) => Object.prototype.toString.call(x));
+  if (t1 !== t2) return false;
+  if (t1 === '[object Object]' || t1 === '[object Array]')
+    return _.size(v1) === _.size(v2) && (deep < 0 || _.every(v1, (x, k) => _equal(x, v2[k], deep - 1)));
+  if (v1 == null) return v1 === v2;
+  return v1.valueOf() === v2.valueOf();
+};
+
 const isAsync = true;
 const min = (obj, n) => _.size(obj) >= n;
 const max = (obj, n) => _.size(obj) <= n;
-const _equal = (v, c) => _.isObjectLike(v) ? _.isEqual(c, v) : _.eq(c, v);
+// const _equal = (v, c) => _.isObjectLike(v) ? _.isEqual(c, v) : _.eq(c, v);
 const _keys = (obj1, obj2) => _.intersection(_.keys(obj1), _.keys(obj2));
 const _uniq = (arr) => _.every(arr, (item, i) => _.eq(_.indexOf(arr, item), i));
 const toDate = (d) => new Date(_.isFunction(d) ? d() : d);
@@ -20,7 +37,6 @@ const iteratee = (schema, value, path, type, keyword, cb) =>
 const keywords = {
 
   number: {
-    enum   : _.flip(_.includes),
     integer: {defaults: true, validator: (n, y) => !y || _.isInteger(n)},
     maximum: _.lte,
     minimum: _.gte,
@@ -30,7 +46,6 @@ const keywords = {
   },
 
   string: {
-    enum     : _.flip(_.includes),
     minLength: min,
     maxLength: max,
     pattern  : (v, r) => RegExp(r).test(v),
@@ -124,7 +139,7 @@ const keywords = {
   },
 
   common: {
-    enum: (v, arr) => _.some(arr, (ele) => _equal(v, ele)),
+    'enum' : (v, arr) => _.some(arr, (ele) => _equal(v, ele)),
     'const': _equal
   },
 

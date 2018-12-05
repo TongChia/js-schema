@@ -2,26 +2,26 @@ const _ = require('lodash');
 const {createSchema, _schema} = require('./schema');
 const {keywords} = require('./keywords');
 
-const array = createSchema('array', _.isArray);
+const arr = createSchema('array', _.isArray);
+const Arr = arr.class;
 
-_.each(keywords.array,  (v, k) => array.addValidate(k, v));
-_.each(keywords.common, (v, k) => array.addValidate(k, v));
+_.each(keywords.array,  (v, k) => Arr.addValidate(k, v));
+_.each(keywords.common, (v, k) => Arr.addValidate(k, v));
 
-array.proto('unique', function (y, msg) {
+Arr.proto('unique', function (y, msg) {
   return this.uniqueItems(y, msg);
 });
 
-array.hook('items', function (items, params, message) {
+Arr.hook('items', function (items, params, message) {
   return items(_.isArray(params) ? _.map(params, _schema) : _schema(params), message);
 });
 
-array.proto('reduce', function (params, message) {
+Arr.proto('reduce', function (params, message) {
   return this.items(_.get(params, 'length') > 1 ? params : _schema(params), message);
 });
 
 module.exports = {
-  array,
-  arr: array,
-  unique: array.unique(true),
-  $array: array.items
+  arr,
+  array: arr,
+  unique: arr.unique(true),
 };

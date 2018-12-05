@@ -3,7 +3,7 @@ const {createSchema} = require('./schema');
 
 const none = createSchema('none', _.stubFalse);
 
-none.hook('toJSON', function (toJSON) {
+none.class.hook('toJSON', function (toJSON) {
   if (this.original) return false;
   return _.assign(toJSON(), {not: true});
 });

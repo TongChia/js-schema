@@ -2,9 +2,10 @@ const _ = require('lodash');
 const {createSchema} = require('./schema');
 const {keywords} = require('./keywords');
 
-const number = createSchema('number', _.isFinite);
+const num = createSchema('number', _.isFinite);
+const Num = num.class;
 
-_.each(keywords.number, (validate, keyword) => number.addValidate(keyword, validate));
+_.each(keywords.number, (validate, keyword) => Num.addValidate(keyword, validate));
 
 _.each({
   max: function (n, eq, ...rest) {
@@ -16,14 +17,14 @@ _.each({
   range: function (min, max, ...rest) {
     return this.min(min, ...rest).max(max, ...rest);
   }
-}, (method, keyword) => number.proto(keyword, method));
-_.each(keywords.common, (v, k) => number.addValidate(k, v));
+}, (method, keyword) => Num.proto(keyword, method));
 
-const integer = number.integer(true).set('type', 'integer');
+_.each(keywords.common, (v, k) => Num.addValidate(k, v));
+
+const int = num.integer(true).set('type', 'integer');
 
 module.exports = {
-  number,
-  num: number,
-  integer,
-  int: integer
+  num, int,
+  number: num,
+  integer: int,
 };
