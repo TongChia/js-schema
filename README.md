@@ -7,6 +7,7 @@ JS-SCHEMA
 JS Schema validation library, compatible with `json-schema`. 
 It is more suitable for js use, pursues concise and stylish code style, make it reusable as possible.
 
+welcome to `fork`,`pr`,`issues`;
 
 QUICK START
 -----------
