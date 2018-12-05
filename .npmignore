@@ -3,6 +3,7 @@
 .babelrc
 .editorconfig
 .eslintrc
+.travis.yml
 docker-compose.yml
 Dockerfile
 !lib
