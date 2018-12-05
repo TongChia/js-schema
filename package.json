@@ -1,6 +1,6 @@
 {
   "name": "@tongchia/jsschema",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "js schema",
   "main": "./lib/index.js",
   "scripts": {
