@@ -2,11 +2,11 @@
   "name": "@tongchia/jsschema",
   "version": "0.2.10",
   "description": "js schema",
-  "main": "./src/index.js",
+  "main": "./lib/index.js",
   "scripts": {
     "lint": "eslint src",
     "test": "mocha --recursive --require @babel/register",
-    "build": "babel ./src/ -d ./lib/"
+    "build": "env NODE_ENV=production babel ./src/ -d ./lib/"
   },
   "repository": {
     "type": "git",
@@ -44,5 +44,6 @@
     "lodash": "^4.17.11",
     "param-case": "^2.1.1",
     "validator": "^10.9.0"
-  }
+  },
+  "tonicExampleFilename": "examples/runkit.js"
 }
