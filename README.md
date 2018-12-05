@@ -9,6 +9,8 @@ It is more suitable for js use, pursues concise and stylish code style, make it 
 
 welcome to `fork`,`pr`,`issues`;
 
+[try it now!](https://npm.runkit.com/@tongchia/jsschema)
+
 QUICK START
 -----------
 
