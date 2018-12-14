@@ -5,7 +5,8 @@
   "main": "./lib/index.js",
   "scripts": {
     "lint": "eslint src",
-    "test": "mocha --recursive --require @babel/register",
+    "test": "mocha --recursive",
+    "test:babel": "mocha --recursive --require @babel/register",
     "build": "env NODE_ENV=production babel ./src/ -d ./lib/"
   },
   "repository": {

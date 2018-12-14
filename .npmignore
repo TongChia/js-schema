@@ -1,11 +1,6 @@
-*.iml
-.idea
-.babelrc
-.editorconfig
-.eslintrc
-.travis.yml
-docker-compose.yml
-Dockerfile
+*
+!examples
 !lib
-src
-test
+!package.json
+!LICENSE
+!README.md

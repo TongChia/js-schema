@@ -103,14 +103,15 @@ function createSchema (type, checker) {
       if (!this.isTyped(value))
         return callback(new ValidationError(messages.typeError, {type, value, errorType: 'TypeError'}), value);
 
+      let clone = _.clone(value);
       return $.each(_keys(Schema.validates, this._), (keyword, cb) => {
         const params = this._[keyword], {isAsync, validator, message} = Schema.validates[keyword];
 
         if (isAsync) return validator.call(this, value, params, cb);
-        if (validator.call(this, value, params)) return cb();
+        if (validator.call(this, clone, params)) return cb(null);
 
         return cb(new ValidationError(this.get(['errorMessage', keyword]) || message, {value, params, keyword, type}));
-      }, (err) => callback(err, value));
+      }, (err) => callback(err, clone));
     }
 
     /**
