@@ -4,7 +4,7 @@ const {formats} = require('./formats');
 const {ValidationError : Err, messages} = require('./error');
 
 /**
- *
+ * check
  * @param v1
  * @param v2
  * @param deep
@@ -16,8 +16,7 @@ const _equal = (v1, v2, deep = 3) => {
   if (t1 !== t2) return false;
   if (t1 === '[object Object]' || t1 === '[object Array]')
     return _.size(v1) === _.size(v2) && (deep < 0 || _.every(v1, (x, k) => _equal(x, v2[k], deep - 1)));
-  if (v1 == null) return v1 === v2;
-  return v1.valueOf() === v2.valueOf();
+  return Object.is(v1, v2);
 };
 
 const isAsync = true;
@@ -86,7 +85,7 @@ const keywords = {
     minProperties: min,
     maxProperties: max,
     matched: {defaults: true, validator (obj, y) {
-      let matched = 0, n = Number(y), keys = _.keys(obj),
+      let matched = 0, keys = _.keys(obj), n = _.min([Number(y), keys.length]),
         patterns = _.keys(this.get('patternProperties'));
 
       if (n <= 0) return true;
