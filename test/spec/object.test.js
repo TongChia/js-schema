@@ -196,7 +196,7 @@ describe('OBJECT SCHEMA TEST', () => {
 
       cb => object
         .properties({foo: string, bar: number})
-        .matched(true)
+        .matched(1)
         .isValid({foo: 'hello'}, cb),
 
       cb => object
@@ -209,7 +209,7 @@ describe('OBJECT SCHEMA TEST', () => {
 
       cb => object
         .patternProperties({'^\\d+$': string})
-        .matched(true)
+        .matched(1)
         .isValid({'1': 'hello'}, cb),
 
       cb => object

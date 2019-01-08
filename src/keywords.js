@@ -84,12 +84,8 @@ const keywords = {
     dependencies: (obj, param) => _.every(param, (deps, prop) => (!_.has(obj, prop) || _.every(deps, dep => _.has(obj, dep)))),
     minProperties: min,
     maxProperties: max,
-    matched: {defaults: true, validator (obj, y) {
-      let matched = 0, keys = _.keys(obj), n = _.min([Number(y), keys.length]),
-        patterns = _.keys(this.get('patternProperties'));
-
-      if (n <= 0) return true;
-      if (!_.size(obj)) return false;
+    matched: {defaults: 1, validator (obj, n) {
+      let matched = 0, keys = _.keys(obj), patterns = _.keys(this.get('patternProperties'));
 
       while (matched < n) {
         if (!keys.length) return false;
