@@ -23,5 +23,6 @@ Arr.proto('reduce', function (params, message) {
 module.exports = {
   arr,
   array: arr,
+  items: arr.items.bind(arr),
   unique: arr.unique(true),
 };

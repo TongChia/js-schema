@@ -17,4 +17,8 @@ _.each(['properties', 'patternProperties'], key =>
     return old(_.mapValues(params, _schema), message);
   }));
 
-module.exports = {obj, object: obj};
+module.exports = {
+  obj,
+  props: obj.properties.bind(obj),
+  object: obj
+};

@@ -3,7 +3,7 @@ const should = chai.should();
 const faker = require('faker');
 const _ = require('lodash');
 const {series} = require('async');
-const {number, string, date, nil, array, unique} = require('../../src');
+const {number, string, nil, array, unique} = require('../../src');
 
 describe('ARRAY SCHEMA TEST', () => {
   

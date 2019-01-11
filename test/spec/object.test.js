@@ -3,7 +3,7 @@ const should = chai.should();
 const faker = require('faker');
 const _ = require('lodash');
 const $ = require('async');
-const {object, number, string, nil} = require('../../src');
+const {object, properties, number, string, nil} = require('../../src');
 
 describe('OBJECT SCHEMA TEST', () => {
 
@@ -13,7 +13,7 @@ describe('OBJECT SCHEMA TEST', () => {
     email: faker.internet.email()
   };
 
-  const schema = object.properties({
+  const schema = properties({
     name: string,
     age: number.min(0).max(100, true)
   });
