@@ -1,31 +1,53 @@
-const _any      = require('./any');
-const _none     = require('./none');
-const _null     = require('./null');
-const _date     = require('./date');
-const _number   = require('./number');
-const _string   = require('./string');
-const _array    = require('./array');
-const _object   = require('./object');
-const _buffer   = require('./buffer');
-const _boolean  = require('./boolean');
-const _function = require('./function');
-const _error    = require('./error');
-const _parse    = require('./parse');
+import _ from 'lodash';
+import keywords from './keywords';
 
-const Schema = {
-  ..._any,
-  ..._none,
-  ..._null,
-  ..._date,
-  ..._number,
-  ..._string,
-  ..._array,
-  ..._object,
-  ..._buffer,
-  ..._boolean,
-  ..._function,
-  ..._error,
-  ..._parse,
+function Schema (definitions = {}) {
+  if (!new.target) return new Schema(definitions);
+  this._ = definitions;
+}
+
+Schema.chain = function (keyword) {
+  this.prototype[keyword] = function (...params) {
+    return this.division({[keyword]: params});
+  };
 };
 
-module.exports = Schema;
+const proto = Schema.prototype;
+
+proto.division = function (properties) {
+  return new Schema({...this._, ...properties});
+};
+
+proto.isValid = function (value, callback) {
+  const isSync = !callback;
+
+  return _(Schema.fn.keywords)
+    .keys()
+    .filter(validate => _.has(this._, validate))
+    .reduce((errors, keyword) => {
+      const [params, message] = this._[keyword], {validator, message: defaultMsg} = Schema.fn.keywords[keyword];
+
+      if (!validator.call(this, value, params))
+        errors.push(new Error(message || defaultMsg || '', {value})); //TODO: msg template
+
+      return errors;
+
+    }, []);
+};
+
+function fn (keyword, describe) {
+  if (_.isPlainObject(keyword)) return _.values(keyword, this::fn);
+  this.chain(keyword);
+  fn.keywords[keyword] = describe;
+}
+
+fn.keywords = keywords;
+_.each(_.keys(keywords), (key) => Schema.chain(key));
+
+Schema.fn = fn;
+
+Schema.plugin = (plugins) => {
+  return _.merge(Schema.bind({}), {...plugins})
+};
+
+export default Schema;
