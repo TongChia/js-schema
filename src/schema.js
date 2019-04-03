@@ -1,177 +1,94 @@
-const _ = require('lodash');
-const $ = require('async');
-const {_keys} = require('./keywords');
-const {ValidationError, messages} = require('./error');
+import _ from 'lodash';
 
-const STORE = new Map;
-const JSON_TYPE = ['string', 'number', 'integer', 'boolean', 'null', 'array', 'object'];
+const clusterID = _.random(0, 0xff);
+let instanceID = 0, classID = 0;
 
-/* eslint-disable indent */
-const _schema = (s) =>
-  s === undefined ? STORE.get('any') :
-  s === true      ? STORE.get('any') :
-  s === false     ? STORE.get('none') :
-  _.isString(s)   ? STORE.get(s) :
-  _.isArray(s)    ? STORE.get('array').reduce(s.length > 1 ? s : s[0]) :
-  _.isObject(s)   ? s.isSchema ? s : STORE.get('object').properties(s) :
-  s;
-/* eslint-enable indent */
-
-const toJSON = function () {
-  let {type, ...json} = this._;
-  return ({
-    [JSON_TYPE.includes(type) ? 'type' : '_js_type']: type,
-    ...json
-  });
+const getTypeOf = (value) => {
+  const type = Object.prototype.toString.call(value);
+  return type.substr(8, type.length - 9).toLowerCase();
 };
 
-const toString = function () {
-  let keys = _.pull(_.keys(this._), 'type');
-  return 'schema:' + this._.type + (keys.length ? '.' : '') +
-    keys.splice(0, 3).map(k => (
-      k + '(' + (_.isArray(this._[k]) ? '[...]' : _.isObject(this._[k]) ? '{...}' : this._[k]) + ')'
-    )).join('.') + (keys.length ? '...' : '') ;
-};
+const genId = () => _.join(_.map([clusterID, classID, instanceID++], id => id.toString(16)), '-');
 
-/**
- * create Schema constructor.
- * @param type {string}
- * @param checker? {Function}
- * @return {function}
- */
-function createSchema (type, checker) {
+export default class Schema {
 
-  /**
-   * Schema constructor.
-   * @param {Object} definitions
-   * @param {string} definitions.type
-   * @return {Schema}
-   * @class
-   */
-  function Schema (definitions = {}) {
-    if (!new.target) return new Schema(definitions);
-    this._ = definitions;
+  static validates = {};
+
+  static fn (keyword, describe) {
+    if (_.isFunction(describe)) return this.fn(keyword, {validator: describe});
+    if (!_.isEmpty(describe)) this.validates[keyword] = describe;
+    this.prototype[keyword] = function (...params) {
+      return this.division(keyword, ...params);
+    };
+    return this;
   }
 
-  Schema.validates = {};
+  config = {};
+  raw = {};
+  _id;
+  $id;
 
-  const proto = _.assign(Schema.prototype, {
-    isSchema: true,
+  constructor(config = {}) {
+    _.assign(this.config, config);
+    this._id = genId();
+  }
 
-    class: Schema,
+  #clone () {
+    return _.assign(_.create(Object.getPrototypeOf(this)), this, {_id: genId()});
+  }
 
-    toJSON, toString,
+  set (key, value) {
+    _.set(this.raw, key, value);
+    return this;
+  }
 
-    isTyped: checker || _.stubTrue,
+  get (key) {
+    return _.get(this.raw, key);
+  }
 
-    set (key, value) {
-      _.set(this._, key, value);
-      return this;
-    },
+  division (keyword, value, message) {
+    const clone = this.#clone().set(keyword, value);
+    if (message) clone.set(['errorMessage', keyword], value);
+    return clone;
+  }
 
-    get (key) {
-      return _.get(this._, key);
-    },
+  isValid(value, options, callback) {
 
-    has (key) {
-      return _.has(this._, key);
-    },
+    const config = _.defaults(options, this.config);
+    const {promise, returnErrors} = config;
+    const valueType = getTypeOf(value);
+    const validType = this.raw.type;
+    const validates = this.constructor.validates;
+    const errors = [];
+    const isAsync = callback || promise;
 
-    /**
-     * division - Create new instance & merge properties;
-     * @param {Object} variation
-     * @return {Schema}
-     */
-    division (variation = {}) {
-      return new Schema({...this._, ...variation});
-    },
+    if (validType && (valueType !== validates)) {
 
-    accept (...rest) {
-      return this.division({accept: _.flatten(rest)});
-    },
-
-    /**
-     * verify `value` is valid for this schema instance.
-     * @param value
-     * @param {Schema~isValidCallback} callback
-     * @return {*}
-     */
-    isValid (value, callback) {
-      if (!callback && !_.eq(typeof Promise, 'undefined'))
-        return new Promise((resolve, reject) => this.isValid(value, (err, result) => err ? reject(err) : resolve(result)));
-
-      if (!this.isTyped(value))
-        return callback(new ValidationError(messages.typeError, {type, value, errorType: 'TypeError'}), value);
-
-      let clone = _.clone(value);
-      return $.each(_keys(Schema.validates, this._), (keyword, cb) => {
-        const params = this._[keyword], {isAsync, validator, message} = Schema.validates[keyword];
-
-        if (isAsync) return validator.call(this, value, params, cb);
-        if (validator.call(this, clone, params)) return cb(null);
-
-        return cb(new ValidationError(this.get(['errorMessage', keyword]) || message, {value, params, keyword, type}));
-      }, (err) => callback(err, clone));
     }
 
-    /**
-     * isValid callback.
-     * @callback Schema~isValidCallback
-     * @param {?Error} error
-     * @param value
-     */
-  });
+    for (const keyword of this.raw) {
+      if (_.has(validates, keyword)) {
+        const {validator} = validates[keyword];
 
-  _.assign(Schema, {
-
-    validates: {},
-
-    proto (prop, method) {
-      if (arguments.length === 1) return proto[prop];
-      proto[prop] = method;
-      return this;
-    },
-
-    hook (prop, fn) {
-      const old = this.proto(prop);
-      return this.proto(prop, function (...rest) {
-        return fn.call(this, _.bind(old, this), ...rest);
-      });
-    },
-
-    addKeyword (keyword, defaults) {
-      const def = _.clone(defaults);
-      return this.proto(keyword, function (params, message) {
-        const schema = this.division({[keyword]: _.defaultTo(params, def)});
-        if (message) schema.set(['errorMessage', keyword], message);
-        return schema;
-      });
-    },
-
-    addValidate (keyword, validate, msg) {
-      if (_.isFunction(validate)) return this.addValidate(keyword, {validator: validate, message: msg});
-      const {isAsync, message, validator, defaults} = validate;
-      _.set(Schema.validates, keyword, _.omitBy({validator, message, isAsync}, _.isUndefined));
-      return this.addKeyword(keyword, defaults);
+        if (validator && !validator(value, this.raw[keyword], config, this.raw)) {
+          if (returnErrors) {
+            errors.push(_.get(this.raw, ['errorMessage', keyword]))
+          } else {
+            return false;
+          }
+        }
+      }
     }
-  });
 
-  _.each(['title', 'description', 'examples', 'default', '$comment'], (k) => Schema.addKeyword(k));
+    if (!isAsync)
+      return returnErrors ? errors : true;
 
-  const schema = _.assign(new Schema({type}), {
-    original: true,
-    use () {
-      // TODO
+    if (callback) {
+
     }
-  });
 
-  STORE.set(type, schema);
+    return errors;
 
-  return schema;
+  }
+
 }
-
-module.exports = {
-  _schema,
-  createSchema,
-  toJSON
-};

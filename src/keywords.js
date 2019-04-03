@@ -35,56 +35,49 @@ const iteratee = (schema, value, path, type, keyword, cb) =>
 
 const keywords = {
 
-  number: {
-    integer: {defaults: true, validator: (n, y) => !y || _.isInteger(n)},
-    maximum: _.lte,
-    minimum: _.gte,
-    exclusiveMaximum: _.lt,
-    exclusiveMinimum: _.gt,
-    multipleOf: (v, m) => (v % m) === 0,
-  },
+  integer: {defaults: true, validator: (n, y) => !y || _.isInteger(n)},
+  maximum: _.lte,
+  minimum: _.gte,
+  exclusiveMaximum: _.lt,
+  exclusiveMinimum: _.gt,
+  multipleOf: (v, m) => (v % m) === 0,
 
-  string: {
-    minLength: min,
-    maxLength: max,
-    pattern  : (v, r) => RegExp(r).test(v),
-    format   : (v, format) => formats[format](v),
-    regexp   : (v, [source, flags]) => RegExp(source, flags).test(v),
-    _format  : (v, [format, ...rest]) => formats[String(format)](v, ...rest)
-  },
+  minLength: min,
+  maxLength: max,
+  pattern  : (v, r) => RegExp(r).test(v),
+  format   : (v, format) => formats[format](v),
+  regexp   : (v, [source, flags]) => RegExp(source, flags).test(v),
+  _format  : (v, [format, ...rest]) => formats[String(format)](v, ...rest),
 
-  array: {
-    uniqueItems: {defaults: true, validator: (arr, y) => !y || _uniq(arr)},
-    minItems: min,
-    maxItems: max,
-    contains: {
-      isAsync, validator: (value, schema, callback) => $.someSeries(value,
-        (item, cb) => schema.isValid(item, (invalid) => cb(null, _.isNil(invalid))),
-        (err, valid) => callback(valid ? null : Err(messages.containsError, {schema}), value)
-      )
-    },
-    items: {
-      isAsync, validator: (value, items, callback) =>
-        $.times(_([value, items]).map('length').min(), (i, cb) =>
-          iteratee(_.isArray(items) ? items[i] : items, value, i, 'array', 'items', cb), callback)
-    },
-    additionalItems: {
-      isAsync, validator: function (value, schema, callback) {
-        const int = this.get('items.length');
-        if (!(int < value.length)) return callback(null, value);
-        //! ↑ also checked `items` is not `array`;
-        return $.times(value.length - int, (n, cb) =>
-          iteratee(schema, value, int + n, 'array', 'additionalItems', cb), callback);
-      }
+  uniqueItems: {defaults: true, validator: (arr, y) => !y || _uniq(arr)},
+  minItems: min,
+  maxItems: max,
+  contains: {
+    asyncValidator: (value, schema, callback) => $.someSeries(value,
+      (item, cb) => schema.isValid(item, (invalid) => cb(null, _.isNil(invalid))),
+      (err, valid) => callback(valid ? null : Err(messages.containsError, {schema}), value)
+    )
+  },
+  items: {
+    asyncValidator: (value, items, callback) =>
+      $.times(_([value, items]).map('length').min(), (i, cb) =>
+        iteratee(_.isArray(items) ? items[i] : items, value, i, 'array', 'items', cb), callback)
+  },
+  additionalItems: {
+    asyncValidator: function (value, schema, callback) {
+      const int = this.get('items.length');
+      if (!(int < value.length)) return callback(null, value);
+      //! ↑ also checked `items` is not `array`;
+      return $.times(value.length - int, (n, cb) =>
+        iteratee(schema, value, int + n, 'array', 'additionalItems', cb), callback);
     }
   },
 
-  object: {
-    required: (obj, props) => _.every(props, p => _.has(obj, p) && obj[p] !== undefined),
-    dependencies: (obj, param) => _.every(param, (deps, prop) => (!_.has(obj, prop) || _.every(deps, dep => _.has(obj, dep)))),
-    minProperties: min,
-    maxProperties: max,
-    matched: {defaults: 1, validator (obj, n) {
+  required: (obj, props) => _.every(props, p => _.has(obj, p) && obj[p] !== undefined),
+  dependencies: (obj, param) => _.every(param, (deps, prop) => (!_.has(obj, prop) || _.every(deps, dep => _.has(obj, dep)))),
+  minProperties: min,
+  maxProperties: max,
+  matched: {defaults: 1, validator (obj, n) {
       let matched = 0, keys = _.keys(obj), patterns = _.keys(this.get('patternProperties'));
 
       while (matched < n) {
@@ -96,69 +89,63 @@ const keywords = {
 
       return true;
     }},
-    properties: {
-      isAsync, validator: (value, props, callback) =>
-        $.each(_keys(value, props), (key, cb) => iteratee(props[key], value, key, 'object', 'properties', cb), callback)
+  properties: {
+    validator: (value, param) => {
+      for (let v in value) {}
     },
-    patternProperties: {
-      isAsync, validator (value, patternProps, callback) {
-        const keys = _.keys(value), patterns = _.keys(patternProps), entries = [];
-        _.each(patterns, (pattern) => _.each(keys, key => {if (RegExp(pattern).test(key)) entries.push([key, pattern]);}));
+    asyncValidator: (value, props, callback) =>
+      $.each(_keys(value, props), (key, cb) => iteratee(props[key], value, key, 'object', 'properties', cb), callback)
+  },
+  patternProperties: {
+    asyncValidator (value, patternProps, callback) {
+      const keys = _.keys(value), patterns = _.keys(patternProps), entries = [];
+      _.each(patterns, (pattern) => _.each(keys, key => {if (RegExp(pattern).test(key)) entries.push([key, pattern]);}));
 
-        return $.each(entries, ([key, pattern], cb) => iteratee(patternProps[pattern], value, key, 'object', 'patternProperties', cb), callback);
-      }
-    },
-    additionalProperties: {
-      isAsync, validator (value, schema, callback) {
-        const patterns = _.keys(this.get('patternProperties'));
-        const others = _.reject(_.keys(value), (key) =>
-          (this.has(['properties', key]) || _.some(patterns, pattern => RegExp(pattern).test(key))));
-
-        return $.each(others, (key, cb) => iteratee(schema, value, key, 'object', 'additionalProperties', cb), callback);
-      }
-    },
-    propertyNames: {
-      isAsync, validator: (value, schema, callback) =>
-        $.each(_.keys(value), (key, cb) => schema.isValid(key, cb), callback),
+      return $.each(entries, ([key, pattern], cb) => iteratee(patternProps[pattern], value, key, 'object', 'patternProperties', cb), callback);
     }
   },
+  additionalProperties: {
+    asyncValidator (value, schema, callback) {
+      const patterns = _.keys(this.get('patternProperties'));
+      const others = _.reject(_.keys(value), (key) =>
+        (this.has(['properties', key]) || _.some(patterns, pattern => RegExp(pattern).test(key))));
 
-  buffer: {
-    minBytes: min,
-    maxBytes: max,
+      return $.each(others, (key, cb) => iteratee(schema, value, key, 'object', 'additionalProperties', cb), callback);
+    }
+  },
+  propertyNames: {
+    asyncValidator: (value, schema, callback) =>
+      $.each(_.keys(value), (key, cb) => schema.isValid(key, cb), callback),
   },
 
-  date: {
-    before: (v, d) => _.lt(v, toDate(d)),
-    after:  (v, d) => _.gte(v, toDate(d)),
-  },
+  minBytes: min,
+  maxBytes: max,
 
-  common: {
-    'enum' : (v, arr) => _.some(arr, (ele) => _equal(v, ele)),
-    'const': _equal
-  },
+  before: (v, d) => _.lt(v, toDate(d)),
+  after:  (v, d) => _.gte(v, toDate(d)),
 
-  any: {
-    not: {
-      isAsync, validator: (value, params, cb) =>
-        params.isValid(value, (err) =>
-          cb(err ? null : new Err(messages.defaultError, {value, params})))
-    },
-    anyOf: {
-      isAsync, validator: (value, params, cb) =>
-        $.someSeries(params, (schema, cb) => schema.isValid(value, (invalid) => cb(null, _.isNil(invalid))),
-          (err, valid) => cb(valid ? null : Err(messages.defaultError, {type: '*', keyword: 'oneOf', value, params})))
-    },
-    allOf: {
-      isAsync, validator: (v, schemas, cb) =>
-        $.every(schemas, (schema, cb) => schema.isValid(v, cb), cb)
-    },
-    oneOf: {
-      isAsync, validator: (value, params, cb) =>
-        $.reduce(params, false, (matched, schema, cb) => schema.isValid(value, (invalid) =>
-          cb(!invalid && matched, !invalid || matched)), (twice, once) =>
-          cb((twice || !once) ? new Err(messages.defaultError, {type: '*', keyword: 'oneOf', value, params}) : null))
-    },
+  'enum' : (v, arr) => _.some(arr, (ele) => _equal(v, ele)),
+  'const': _equal,
+
+  not: {
+    asyncValidator: (value, params, cb) =>
+      params.isValid(value, (err) =>
+        cb(err ? null : new Err(messages.defaultError, {value, params})))
+  },
+  anyOf: {
+    asyncValidator: (value, params, cb) =>
+      $.someSeries(params, (schema, cb) => schema.isValid(value, (invalid) => cb(null, _.isNil(invalid))),
+        (err, valid) => cb(valid ? null : Err(messages.defaultError, {type: '*', keyword: 'oneOf', value, params})))
+  },
+  allOf: {
+    asyncValidator: (v, schemas, cb) =>
+      $.every(schemas, (schema, cb) => schema.isValid(v, cb), cb)
+  },
+  oneOf: {
+    asyncValidator: (value, params, cb) =>
+      $.reduce(params, false, (matched, schema, cb) => schema.isValid(value, (invalid) =>
+        cb(!invalid && matched, !invalid || matched)), (twice, once) =>
+        cb((twice || !once) ? new Err(messages.defaultError, {type: '*', keyword: 'oneOf', value, params}) : null))
   },
 };
 

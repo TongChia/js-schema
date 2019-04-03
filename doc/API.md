@@ -24,10 +24,14 @@ const accountSchema = schema({
   birthday: datetime.after('1984/04/01'),
   age: schema.anyOf(number, string.format('numeric'))
 }).required(['username', 'password'])
+
 const errors = accountSchema.isValid({
   username: 'tongchia',
   password: 'guess'
-}, true);
+}, {
+  returnErrors: true,
+  deep: 3,
+});
 ```
 
 ### ADD FUNCTION
