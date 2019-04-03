@@ -52,27 +52,28 @@ export default class Schema {
     return clone;
   }
 
-  isValid(value, options, callback) {
+  isValid(value, config, callback) {
 
-    const config = _.defaults(options, this.config);
-    const {promise, returnErrors} = config;
+    const conf = _.defaults(options, this.config);
+    const {promise, returnErrors} = conf;
     const valueType = getTypeOf(value);
     const validType = this.raw.type;
     const validates = this.constructor.validates;
     const errors = [];
     const isAsync = callback || promise;
 
-    if (validType && (valueType !== validates)) {
+    if (validType && (valueType !== validType)) {
 
     }
 
     for (const keyword of this.raw) {
       if (_.has(validates, keyword)) {
         const {validator} = validates[keyword];
+        const param = this.raw[keyword];
 
-        if (validator && !validator(value, this.raw[keyword], config, this.raw)) {
+        if (validator && !validator(value, param, this.raw, conf)) {
           if (returnErrors) {
-            errors.push(_.get(this.raw, ['errorMessage', keyword]))
+            errors.push(_.defaultTo(_.get(this.raw, ['errorMessage', keyword]), 'error message'))
           } else {
             return false;
           }
