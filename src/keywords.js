@@ -35,6 +35,7 @@ const iteratee = (schema, value, path, type, keyword, cb) =>
 
 const keywords = {
 
+  type: {},
   integer: {defaults: true, validator: (n, y) => !y || _.isInteger(n)},
   maximum: _.lte,
   minimum: _.gte,
@@ -78,17 +79,17 @@ const keywords = {
   minProperties: min,
   maxProperties: max,
   matched: {defaults: 1, validator (obj, n) {
-      let matched = 0, keys = _.keys(obj), patterns = _.keys(this.get('patternProperties'));
+    let matched = 0, keys = _.keys(obj), patterns = _.keys(this.get('patternProperties'));
 
-      while (matched < n) {
-        if (!keys.length) return false;
-        let key = keys.shift();
-        if (this.has(['properties', key]) || _.some(patterns, pattern => RegExp(pattern).test(key)))
-          matched ++;
-      }
+    while (matched < n) {
+      if (!keys.length) return false;
+      let key = keys.shift();
+      if (this.has(['properties', key]) || _.some(patterns, pattern => RegExp(pattern).test(key)))
+        matched ++;
+    }
 
-      return true;
-    }},
+    return true;
+  }},
   properties: {
     validator: (value, param) => {
       for (let v in value) {}

@@ -5,8 +5,12 @@
         "node": "current"
       },
       "debug": true,
-      "useBuiltIns": "usage"
+      "useBuiltIns": false
     }]
+  ],
+  "plugins": [
+    "@babel/plugin-proposal-class-properties",
+    "@babel/plugin-proposal-private-methods"
   ],
   "env": {
     "production": {
