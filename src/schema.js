@@ -66,20 +66,32 @@ class Schema {
 
   type = (param, message) => this.division('type', param, message);
 
-  #getErrorMessage (keyword) {
-    return _.get(this.raw, ['errorMessage', keyword]) ||
+  #getError (keywords, value, config) {
+    const {returnError} = config;
+    const errors = keywords.map((keyword) => ValidationError(
+      _.get(this.raw, ['errorMessage', keyword]) ||
       _.get(this.constructor.validates, [keyword, 'errorMessage']) ||
-      _.get(this.config, 'generalErrorMessage')
-  };
+      _.get(this.config, 'generalErrorMessage'),
+      {value, ...config}
+    ));
+    return returnError ? ValidationError('', {errors}) : _.isEmpty(errors)
+  }
 
-  #getValidationResult (value, keyword, config, isAsync) {
+  /**
+   * check value is valid by call the validator which found by keyword.
+   * @return {boolean|Promise<any>}
+   */
+  #getValidationResult (value, keyword, config, valueType, isAsync) {
     const definitions = this.raw;
     const param = definitions[keyword];
     const {
       validator,
       asyncValidator,
+      targetType,
       promise = getTypeOf(asyncValidator) === 'asyncFunction'
     } = this.constructor.validates[keyword];
+
+    if (targetType && targetType !== valueType) return true;
 
     if (isAsync && asyncValidator) {
       if (promise) return asyncValidator(value, param, config, definitions);
@@ -89,75 +101,70 @@ class Schema {
     return validator(value, param, config, definitions)
   }
 
-  #validateSync (value, config) {
-    const {fuse = true, returnError = false} = config;
-    const validates = this.constructor.validates;
-    const definitions = this.raw;
-    const keys = interKeys(validates, definitions);
-    const errs = [];
-
-    for (const keyword of keys) {
-      if (!this.#getValidationResult(value, keyword, config, false)) {
-        if (!returnError) return false;
-        const error = this.#getErrorMessage(keyword);
-        if (fuse) return error;
-        errs.push(error);
-      }
+  #getValidType (value, config) {
+    const valueType = getTypeOf(value);
+    if (this.raw.type === valueType) {
+      return valueType;
     }
-
-    return returnError ? fuse ? null : errs : true;
   }
 
-  async #validateAsync (value, config) {
-    const {fuse = false, returnError = true} = config;
-    const validates = this.constructor.validates;
-    const definitions = this.raw;
-    const keys = interKeys(validates, definitions); //TODO: check value type;
+  validateSync (value, config) {
+    const conf = _.defaults(config, {returnError: false, multiError: false});
+    const fuse = !conf.returnError || !conf.multiError;
     const errs = [];
+    const type = this.#getValidType(value);
 
-    for (const keyword of keys) {
-      let err;
-      try {
-        const result = await this.#getValidationResult(value, keyword, config, true);
-        if (result instanceof Error) err = result;
-        if (result === false) err = this.#getErrorMessage(keyword);
-      } catch (e) {
-        if (e instanceof ValidationError) err = e;
-        else throw e;
-      }
-      if (err) {
-        if (!returnError) return false;
-        if (fuse) throw err;
-        errs.push(err);
+    if (!type) {
+      errs.push('type');
+    } else {
+      for (const keyword of _.keys(this.raw)) {
+        if (!this.#getValidationResult(value, keyword, conf, type)) {
+          errs.push(keyword);
+          if (fuse) break;
+        }
       }
     }
 
-    if (!returnError) return true;
-    if (!_.isEmpty(errs)) throw errs;
-    return value;
+    return this.#getError(errs, conf);
+  }
+
+  async validate (value, config) {
+    const conf = _.defaults(config, {returnError: true, multiError: true});
+    const fuse = !conf.returnError || !conf.multiError;
+    const errs = [];
+    const type = this.#getValidType(value);
+
+    if (!type) {
+      errs.push('type');
+    } else {
+      for (const keyword of _.keys(this.raw)) {
+        let err;
+        try {
+          const result = await this.#getValidationResult(value, keyword, config, validType, true);
+          if (result instanceof Error) err = result;
+          if (result === false) err = keyword;
+        } catch (e) {
+          if (e instanceof ValidationError) err = e;
+          else throw e;
+        }
+        if (err) {
+          errs.push(err);
+          if (fuse) break;
+        }
+      }
+    }
+
+    return this.#getError(errs, config);
   }
 
   isValid (value, config, callback) {
-
     if (_.isFunction(config)) return this.isValid(value, {}, config);
-    if (callback) return this.isValid(value, _.merge(config, {promise: true, returnErrors: true}))
-      .then((result) => callback(null, result)).catch((err) => callback(err));
+    if (callback) return this.isValid(value, _.merge(config, {promise: true}))
+      .then((result) => callback(result)).catch((err) => callback(err));
 
     const conf = _.defaults(config, this.config);
-    const {fuse, promise, returnErrors} = conf;
-    const valueType = getTypeOf(value);
-    const validType = this.raw.type || 'any';
 
-    // TODO: return type error;
-    if ((validType !== 'any') && (valueType !== validType)) {
-      let err = returnErrors ? 'type error' : false;
-      if (!fuse) err = [err];
-      return promise ? Promise.reject(err) : err;
-    }
-
-    return promise ?
-      this.#validateAsync(value, config) :
-      this.#validateSync(value, config);
+    return (conf.promise ? this.validate : this.validateSync)(value, conf);
   }
 }
 

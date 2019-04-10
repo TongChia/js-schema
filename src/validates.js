@@ -2,6 +2,7 @@ const _ = require('lodash');
 const $ = require('async');
 const {formats} = require('./formats');
 const {ValidationError : Err, messages} = require('./error');
+import {getTypeOf} from './utils';
 
 /**
  * check
@@ -12,10 +13,10 @@ const {ValidationError : Err, messages} = require('./error');
  * @private
  */
 const _equal = (v1, v2, deep = 3) => {
-  let [t1, t2] = _.map([v1, v2], (x) => Object.prototype.toString.call(x));
+  const [t1, t2] = _.map([v1, v2], getTypeOf);
   if (t1 !== t2) return false;
-  if (t1 === '[object Object]' || t1 === '[object Array]')
-    return _.size(v1) === _.size(v2) && (deep < 0 || _.every(v1, (x, k) => _equal(x, v2[k], deep - 1)));
+  if (t1 === 'object' || t1 === 'array')
+    return (_.size(v1) === _.size(v2)) && (deep < 0 || _.every(v1, (x, k) => _equal(x, v2[k], deep - 1)));
   return Object.is(v1, v2);
 };
 
