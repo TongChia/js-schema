@@ -1,15 +1,11 @@
 import _ from 'lodash';
-import {interKeys, getTypeOf, isAsyncFunction} from './utils';
+import {getTypeOf, isAsyncFunction, validatorPromisify} from './utils';
 import {ValidationError} from "./error";
 
 const clusterID = _.random(0, 0xff);
 let instanceID = 0, classID = 0;
 
-const genId = () => _.join([
-  _.padStart(clusterID.toString(16), 2, '0'),
-  _.padStart(classID.toString(16), 2, '0'),
-  _.padStart((instanceID++).toString(16), 4, '0'),
-], '-');
+const genId = () => _([clusterID, classID, instanceID++]).map(n => _.padStart(n.toString(16), 4, '0')).join('-');
 
 class Schema {
 
@@ -17,7 +13,7 @@ class Schema {
 
   static fn (keyword, describe) {
     if (_.isFunction(describe))
-      return this.fn(keyword, isAsyncFunction(describe) ? {asyncValidator: describe} : {validator: describe});
+      return this.fn(keyword, {[isAsyncFunction(describe) ? 'asyncValidator' : 'validator']: describe});
 
     const {validator, asyncValidator, defaultParameter} = describe;
     if (validator || asyncValidator)
@@ -31,9 +27,9 @@ class Schema {
 
   //TODO: create new class;
   static plugin ({validates}) {
-    _.each(validates, (rest, type) => {
-      _.each(rest, (describe, keyword) => this.fn(keyword, _.merge(describe, {valueType: type})))
-    });
+    _.each(validates, (rest, type) =>
+      _.each(rest, (describe, keyword) =>
+        this.fn(keyword, _.merge(describe, {targetType: type}))));
     classID++;
     return Schema;
   }
@@ -67,14 +63,13 @@ class Schema {
   type = (param, message) => this.division('type', param, message);
 
   #getError (keywords, value, config) {
-    const {returnError} = config;
     const errors = keywords.map((keyword) => ValidationError(
       _.get(this.raw, ['errorMessage', keyword]) ||
       _.get(this.constructor.validates, [keyword, 'errorMessage']) ||
       _.get(this.config, 'generalErrorMessage'),
       {value, ...config}
     ));
-    return returnError ? ValidationError('', {errors}) : _.isEmpty(errors)
+    return ValidationError('', {errors})
   }
 
   /**
@@ -83,22 +78,17 @@ class Schema {
    */
   #getValidationResult (value, keyword, config, valueType, isAsync) {
     const definitions = this.raw;
-    const param = definitions[keyword];
     const {
-      validator,
-      asyncValidator,
-      targetType,
-      promise = getTypeOf(asyncValidator) === 'asyncFunction'
+      validator: syncValidator, asyncValidator, targetType,
+      promise = isAsyncFunction(asyncValidator)
     } = this.constructor.validates[keyword];
 
     if (targetType && targetType !== valueType) return true;
 
-    if (isAsync && asyncValidator) {
-      if (promise) return asyncValidator(value, param, config, definitions);
-      return new Promise((resolve, reject) =>
-        asyncValidator(value, param, (err, ...others) => err ? reject(err) : resolve(...others), config, definitions))
-    }
-    return validator(value, param, config, definitions)
+    const validator = (isAsync && asyncValidator) ? promise ?
+      asyncValidator : validatorPromisify(asyncValidator) : syncValidator || _.stubTrue;
+
+    return validator(value, definitions[keyword], config, definitions);
   }
 
   #getValidType (value, config) {
@@ -109,30 +99,28 @@ class Schema {
   }
 
   validateSync (value, config) {
-    const conf = _.defaults(config, {returnError: false, multiError: false});
-    const fuse = !conf.returnError || !conf.multiError;
-    const errs = [];
+    const conf = _.defaults(config, this.config);
     const type = this.#getValidType(value);
+    const errs = [];
 
     if (!type) {
       errs.push('type');
     } else {
       for (const keyword of _.keys(this.raw)) {
-        if (!this.#getValidationResult(value, keyword, conf, type)) {
+        if (!this.#getValidationResult(value, keyword, config, type)) {
           errs.push(keyword);
-          if (fuse) break;
+          if (!conf.multiError) break;
         }
       }
     }
 
-    return this.#getError(errs, conf);
+    return this.#getError(errs, config);
   }
 
   async validate (value, config) {
-    const conf = _.defaults(config, {returnError: true, multiError: true});
-    const fuse = !conf.returnError || !conf.multiError;
-    const errs = [];
+    const conf = _.defaults(config, this.config);
     const type = this.#getValidType(value);
+    const errs = [];
 
     if (!type) {
       errs.push('type');
@@ -140,7 +128,7 @@ class Schema {
       for (const keyword of _.keys(this.raw)) {
         let err;
         try {
-          const result = await this.#getValidationResult(value, keyword, config, validType, true);
+          const result = await this.#getValidationResult(value, keyword, config, type, true);
           if (result instanceof Error) err = result;
           if (result === false) err = keyword;
         } catch (e) {
@@ -149,22 +137,22 @@ class Schema {
         }
         if (err) {
           errs.push(err);
-          if (fuse) break;
+          if (!conf.multiError) break;
         }
       }
     }
 
-    return this.#getError(errs, config);
+    return this.#getError(errs, conf);
   }
 
   isValid (value, config, callback) {
     if (_.isFunction(config)) return this.isValid(value, {}, config);
-    if (callback) return this.isValid(value, _.merge(config, {promise: true}))
-      .then((result) => callback(result)).catch((err) => callback(err));
+    const _config = _.merge(config, {multiError: false});
+    if (callback)
+      return this.validate(value, _config)
+        .then(result => callback(null, _.isNull(result)), err => callback(err));
 
-    const conf = _.defaults(config, this.config);
-
-    return (conf.promise ? this.validate : this.validateSync)(value, conf);
+    return _.isNull(this.validateSync(value, _config));
   }
 }
 
